@@ -9,61 +9,47 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "tabs": [
+    "groups": [
       {
-        "tab": "Documentation",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "index",
-              "architecture"
-            ]
-          },
-          {
-            "group": "Guides",
-            "pages": [
-              "guides/installation",
-              "guides/quickstart",
-              "guides/desktop-app",
-              "guides/hosting-a-relay"
-            ]
-          },
-          {
-            "group": "Core Concepts",
-            "pages": [
-              "concepts/manifests",
-              "concepts/dht",
-              "concepts/transports"
-            ]
-          }
+        "group": "Start here",
+        "pages": [
+          "index",
+          "guides/installation",
+          "guides/quickstart",
+          "guides/desktop-app"
         ]
       },
       {
-        "tab": "Protocol",
-        "groups": [
-          {
-            "group": "Specification",
-            "pages": [
-              "protocol/overview",
-              "protocol/handshake",
-              "protocol/discovery",
-              "protocol/communities",
-              "protocol/content-transfer"
-            ]
-          }
+        "group": "Guides",
+        "pages": [
+          "guides/share-links",
+          "guides/hosting-a-relay"
         ]
       },
       {
-        "tab": "API & CLI",
-        "groups": [
-          {
-            "group": "Reference",
-            "pages": [
-              "reference/cli",
-              "reference/core-api"
-            ]
-          }
+        "group": "Architecture",
+        "pages": [
+          "architecture",
+          "concepts/manifests",
+          "concepts/dht",
+          "concepts/transports"
+        ]
+      },
+      {
+        "group": "Protocol",
+        "pages": [
+          "protocol/overview",
+          "protocol/handshake",
+          "protocol/discovery",
+          "protocol/communities",
+          "protocol/content-transfer"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/cli",
+          "reference/core-api"
         ]
       }
     ],

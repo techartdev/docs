@@ -1,131 +1,122 @@
 ---
 title: "Quickstart"
-description: "Get started with SCP2P by running a local node and publishing your first Share"
+description: "Get your first SCP2P share online in under 10 minutes with desktop or CLI"
 ---
 
-This guide will walk you through installing the SCP2P core reference CLI, starting a local node, and publishing your first Share.
+This guide gives you the fastest path from install to your first successful publish, subscribe, search, and download.
 
-## Installation
+## Before you start
 
-The fastest way to install the `scp2p-cli` and `scp2p-relay` binaries is using our 1-line install scripts.
+- Install SCP2P from the [Installation guide](/guides/installation)
+- Keep one bootstrap peer address ready (`ip:port`) if you are not on the same LAN as another node
+- Make sure local firewall rules allow SCP2P traffic
 
-### Linux / macOS
-
-Install directly from the latest release:
-```bash
-curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | sh
-```
-*(Installs to `/usr/local/bin` with `sudo`, or `~/.local/bin` without).*
-
-### Windows (PowerShell)
-
-Install via PowerShell:
-```powershell
-irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
-```
-*(Installs to `%LOCALAPPDATA%\scp2p-relay\` and adds it to your user PATH).*
-
----
-
-## Building from Source (Optional)
-
-If you prefer to compile from source, ensure you have the Rust toolchain installed (Rust edition 2024).
+## Path 1: desktop app (recommended)
 
 <Steps>
-  <Step title="Clone the repository">
-    ```bash
-    git clone https://github.com/techartdev/scp2p.git
-    cd scp2p
-    ```
+  <Step title="Open Settings and save config">
+    Set at least:
+    - **State database path** (default is fine)
+    - **Bind TCP** (default `0.0.0.0:7001` is fine)
+    - **Bootstrap peers** (recommended when not LAN-only)
+
+    Click **Save Config**.
   </Step>
-  <Step title="Build the CLI">
-    Compile the CLI in release mode for optimal performance.
-    ```bash
-    cargo install --path crates/scp2p-cli
-    ```
+  <Step title="Start the node">
+    Go to **Dashboard** and click **Start Node**.
+
+    Expected result:
+    - Node status becomes **Active**
+    - You see the TCP bind address in the status card
+  </Step>
+  <Step title="Publish your first share">
+    Open **My Shares** and click **New Share**.
+
+    Choose **Files** or **Folder**, set title + visibility, then click **Publish**.
+  </Step>
+  <Step title="Copy a share link">
+    In **My Shares**, click **Copy Link** for your share and send it to another user.
+  </Step>
+  <Step title="Subscribe and sync">
+    On another node, open **Discover**, click **+**, paste the link, then click **Sync**.
+  </Step>
+  <Step title="Search and download">
+    Open **Search**, find a file, and click **Download**.
   </Step>
 </Steps>
 
----
+## Path 2: CLI interactive shell
 
-## Running Your First Node
-
-Now that you have the CLI installed, let's start a node.
+SCP2P CLI is interactive. The executable command is `scp2p`.
 
 <Steps>
-  <Step title="Start the daemon">
-    Open a terminal and start the node process. This process will handle DHT routing, networking, and maintaining your local database.
+  <Step title="Start the shell">
     ```bash
-    scp2p-cli start --log-level info
+    scp2p --db scp2p.db --port 7001 --bootstrap 203.0.113.10:7001
     ```
-    You should see output indicating the node has generated an Ed25519 identity, bound to a UDP/TCP port, and started the DHT.
 
-    Leave this terminal running.
+    The shell starts a local node and opens a menu.
+  </Step>
+  <Step title="Publish content">
+    Choose **Publish files** or **Publish folder**.
+
+    Set:
+    - Title
+    - Visibility (`private` or `public`)
+    - File/folder path
+  </Step>
+  <Step title="Subscribe">
+    Choose **Subscriptions** -> **Subscribe to a new share** and paste:
+    - Share ID
+    - Optional share public key
+  </Step>
+  <Step title="Sync, search, and download">
+    Choose **Sync now**, then **Search**, then **Download by content ID**.
+
+    You can also use **Download share** to fetch multiple files at once.
   </Step>
 </Steps>
 
-## Publishing a Share
+## Verify success
 
-Let's create a directory with some files and publish it to the network.
+You are done when all of these are true:
 
-<Steps>
-  <Step title="Create sample data">
-    Open a *new* terminal window. Create a folder and some files to share.
-    ```bash
-    mkdir my-first-share
-    echo "Hello from SCP2P!" > my-first-share/hello.txt
-    echo "This is a decentralized catalog." > my-first-share/about.txt
-    ```
-  </Step>
-  <Step title="Publish the folder">
-    Use the CLI to publish the folder.
-    ```bash
-    scp2p-cli publish --name "My First Share" ./my-first-share
-    ```
-    The CLI will output a `ShareId` (a 32-byte hex string). **Copy this ID.**
-    
-    *Behind the scenes: The node hashes your files with BLAKE3, creates a Manifest, signs it, and announces the `ShareHead` to the DHT.*
-  </Step>
-</Steps>
+- Dashboard/CLI status shows a running node
+- At least one subscription appears
+- Search returns results
+- A downloaded file is present on disk
 
-## Subscribing and Downloading
-
-To simulate another user, you can run a second node on a different port (or ask a friend on the same LAN to run one). For simplicity, we'll use the same node to subscribe to itself.
-
-<Steps>
-  <Step title="Subscribe to the Share">
-    Use the `ShareId` you copied in the previous step.
-    ```bash
-    scp2p-cli subscribe <PASTE_SHARE_ID_HERE>
-    ```
-    Your node will fetch the Manifest from the DHT/peers and index it locally.
-  </Step>
-  <Step title="Search your subscriptions">
-    Now you can search for the files you just published.
-    ```bash
-    scp2p-cli search "hello"
-    ```
-    The output will list matching items, including their `ContentId` (BLAKE3 hash). Copy the `ContentId`.
-  </Step>
-  <Step title="Download the file">
-    Download the file using its `ContentId`.
-    ```bash
-    scp2p-cli download <PASTE_CONTENT_ID_HERE> --out ./downloads
-    ```
-    Check the `./downloads` folder; you should see your `hello.txt` file!
-  </Step>
-</Steps>
-
-## Next Steps
-
-Now that you have a basic understanding of the publishing and downloading workflow, explore the following resources:
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Architecture" icon="sitemap" href="/architecture">
-    Learn how SCP2P nodes discover each other and route data.
+  <Card title="Desktop app usage" icon="desktop" href="/guides/desktop-app">
+    Learn each page in the desktop app and recommended day-to-day workflow.
   </Card>
-  <Card title="Desktop App" icon="desktop" href="/guides/desktop-app">
-    Try out the graphical Tauri application.
+  <Card title="Share links and subscriptions" icon="link" href="/guides/share-links">
+    Learn the `scp2p://s/...` flow and bootstrap peer hints.
   </Card>
 </CardGroup>
+
+## Build from source (optional)
+
+If you want to run the latest source:
+
+```bash
+git clone https://github.com/techartdev/scp2p.git
+cd scp2p
+cargo install --path crates/scp2p-cli
+```
+
+Then run:
+
+```bash
+scp2p --db scp2p.db --port 7001
+```
+
+## Troubleshooting
+
+- `No peers configured`: add bootstrap peers in app **Settings** or via CLI `--bootstrap`.
+- `Node won’t start`: check if port `7001` is already in use.
+- `Subscribed but no files`: run **Sync** and retry browse/search.
+- `Download fails`: verify at least one peer with content is online.
 

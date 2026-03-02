@@ -1,84 +1,115 @@
 ---
 title: "Desktop App"
-description: "Installing and running the SCP2P graphical interface"
+description: "Install, configure, and use the SCP2P desktop app as a new user"
 ---
 
-While the `scp2p-cli` provides full access to the core protocol, the easiest way for non-developers to use SCP2P is via the desktop application.
+The desktop app is the best way to use SCP2P if you want a visual workflow for publishing, subscribing, and downloading.
 
-The desktop app provides a user-friendly React interface built on top of the SCP2P Rust core using [Tauri](https://tauri.app/).
+## Install
 
-## Installation
-
-The easiest way to get the desktop app is to download a pre-built installer for your operating system from the [GitHub Releases page](https://github.com/techartdev/scp2p/releases).
+Download a release build from [GitHub Releases](https://github.com/techartdev/scp2p/releases).
 
 | OS | Installer Type |
 |---|---|
-| **Windows** | `.msi` (or `.exe` setup) |
+| **Windows** | `.msi` or `.exe` |
 | **macOS** | `.dmg` or `.app.tar.gz` |
 | **Linux** | `.AppImage` or `.deb` |
 
-Download the installer for your system, run it, and launch SCP2P like any standard application.
+Install and launch the app.
 
----
+## First run checklist
 
-## App Features
+Before you do anything else:
 
-The current prototype of the desktop app supports the core SCP2P workflows:
+1. Open **Settings**
+2. Set **State database path**
+3. Set **Bind TCP** (default `0.0.0.0:7001` is usually fine)
+4. Add at least one **Bootstrap Peer** if you are not LAN-only
+5. Click **Save Config**
+6. Go to **Dashboard** and click **Start Node**
 
-- **Identity Management:** View your node ID and manage your cryptographic keys.
-- **Publishing:** Drag and drop folders to create new public or private Shares.
-- **Subscriptions:** Paste an Invite Link or Share ID to subscribe to a peer's catalog.
-- **Local Search:** Instantly search across all your subscribed content.
-- **Downloads:** Click to initiate swarmed, verified downloads from available peers.
+Expected result:
+- Node status changes to **Active**
+- Peers appear over time in Dashboard or Discover
 
----
+## Sidebar pages
 
-## Architecture of the App
+### Dashboard
 
-The desktop app is designed as a thin frontend over the robust core library.
+- Start or stop the local node
+- Check peer/subscription/community counts
+- See bind addresses, DB path, and warnings
+- Use quick links to jump to Discover, My Shares, and Settings
 
-- **Frontend:** React + TypeScript + TailwindCSS. Located in `app/src/`.
-- **Backend/Core:** Rust using the `scp2p_core::NodeHandle` API. The Tauri commands are located in `app/src-tauri/src/main.rs`.
-- **Persistence:** Uses SQLite for data storage, managed by the Rust core, ensuring consistency whether the user is running the GUI or the CLI.
+### Discover
 
----
+- View discovered and subscribed shares
+- Subscribe using share ID or `scp2p://s/...` link
+- Run **Sync** to fetch new manifests
+- Browse share file trees
+- Select files/folders and queue downloads
 
-## Building from Source (Development Mode)
+### Search
 
-If you want to contribute to the desktop app or run it from source, follow these steps.
+- Search across subscribed catalogs only
+- View relevance score and snippet
+- Save a result to any local path
 
-### Prerequisites
+### My Shares
 
-1. **Rust toolchain** (Edition 2024)
-2. **Node.js** (v18+) and `npm`
-3. **Tauri OS dependencies**:
-   - On Windows: Build Tools for Visual Studio
-   - On macOS: Xcode Command Line Tools
-   - On Linux: `libwebkit2gtk-4.1-dev`, `build-essential`, `curl`, `wget`, `file`, `libxdo-dev`, `libssl-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`
+- Publish files or folders
+- Choose `public` or `private` visibility
+- Copy share links for other users
+- Export share secret key when needed
+- Republish to create a new share revision
+- Toggle visibility or delete a share
 
-*(See the official [Tauri Prerequisites guide](https://tauri.app/v1/guides/getting-started/prerequisites) for detailed instructions for your OS).*
+### Communities
 
-### Running the Dev Server
+- Join or leave communities
+- Paste community share links to auto-fill join fields
+- Browse community participants and community public shares
 
-The desktop app source code is located in the `app/` directory of the workspace.
+### Settings
+
+- Load and save `scp2p-desktop-config.cbor`
+- Configure:
+  - DB path
+  - TCP/QUIC bind values
+  - Bootstrap peers
+  - Auto-start on app launch
+
+## Recommended daily workflow
 
 <Steps>
-  <Step title="Navigate to the app directory">
-    ```bash
-    cd app
-    ```
+  <Step title="Start node">
+    Open **Dashboard** and click **Start Node**.
   </Step>
-  <Step title="Install Node dependencies">
-    Install the required React and UI packages.
-    ```bash
-    npm install
-    ```
+  <Step title="Sync content">
+    Open **Discover** and click **Sync**.
   </Step>
-  <Step title="Start Tauri dev server">
-    This command will start the Vite frontend development server, compile the Rust backend, and open the native window.
-    ```bash
-    npm run tauri dev
-    ```
-    *Note: The first time you run this, compiling the Rust backend may take a few minutes.*
+  <Step title="Publish or subscribe">
+    Publish in **My Shares** or subscribe in **Discover**.
+  </Step>
+  <Step title="Search and download">
+    Use **Search** for content lookup and **Discover** for tree-based multi-file download.
   </Step>
 </Steps>
+
+## Troubleshooting
+
+- `NodeRequired overlay keeps appearing`: node is stopped; return to Dashboard and start it.
+- `No peers found`: add reachable bootstrap peers in Settings and retry Sync.
+- `Share subscribed but empty`: run Sync and reopen the share in Discover.
+- `Downloads stall`: keep publisher or another provider online during transfer.
+
+## Developer mode (build from source)
+
+If you are contributing to the app:
+
+```bash
+git clone https://github.com/techartdev/scp2p.git
+cd scp2p/app
+npm install
+npm run tauri dev
+```

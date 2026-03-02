@@ -1,0 +1,67 @@
+---
+title: "Share links and subscriptions"
+description: "Use SCP2P share links to subscribe quickly and connect to the right peers"
+---
+
+SCP2P supports compact share links in this format:
+
+```text
+scp2p://s/<payload>?bp=<bootstrap1,bootstrap2>
+```
+
+The link includes:
+
+- The share ID
+- The publisher share public key
+- Optional bootstrap peer hints (`bp`) for first connection
+
+## Subscribe from the desktop app
+
+<Steps>
+  <Step title="Open Discover">
+    In the app sidebar, open **Discover**.
+  </Step>
+  <Step title="Add private share">
+    Click **+** in the Discover header.
+  </Step>
+  <Step title="Paste the link">
+    Paste the full `scp2p://s/...` link and click **Subscribe**.
+  </Step>
+  <Step title="Sync">
+    Click **Sync** to fetch the manifest immediately.
+  </Step>
+</Steps>
+
+If the link contains bootstrap hints, add them in **Settings** under **Bootstrap Peers** if you cannot discover the share on first try.
+
+## Subscribe from the CLI
+
+Use the interactive CLI:
+
+```bash
+scp2p --bootstrap 203.0.113.10:7001
+```
+
+In the shell:
+
+1. Open **Subscriptions**
+2. Choose **Subscribe to a new share**
+3. Paste the 64-byte share ID from the link
+4. Paste the share public key when prompted
+5. Run **Sync subscriptions now**
+
+## Generate links for your own shares
+
+In the desktop app:
+
+1. Open **My Shares**
+2. Click **Copy Link** on a share card
+3. Send the link to the recipient
+
+The app can include your current bind address and configured bootstrap peers as hints.
+
+## Troubleshooting
+
+- `No shares discovered`: verify both peers have nodes running.
+- `Cannot sync`: confirm at least one reachable bootstrap peer in **Settings**.
+- `Still empty after subscribe`: click **Sync** and then reopen the share in **Discover**.
