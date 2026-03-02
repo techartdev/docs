@@ -74,7 +74,7 @@
         },
         {
           "anchor": "GitHub",
-          "href": "https://github.com/scp2p",
+          "href": "https://github.com/techartdev/scp2p",
           "icon": "github"
         }
       ]
@@ -100,8 +100,8 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/scp2p",
-      "github": "https://github.com/scp2p"
+      "x": "https://x.com/VanyoVanev",
+      "github": "https://github.com/techartdev/scp2p"
     }
   }
 }
