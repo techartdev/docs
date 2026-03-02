@@ -1,0 +1,173 @@
+---
+title: "Hosting a Relay"
+description: "Support the SCP2P network by running a standalone relay node"
+---
+
+Relays are a critical part of the SCP2P network infrastructure. They bridge peers that cannot reach each other directly due to strict NATs or firewalls.
+
+The more relays the network has, the more resilient, fast, and accessible it becomes for everyone. **If you have a server with a public IP, running a relay is the single most impactful contribution you can make to the community.**
+
+## What does a Relay do?
+
+- Accepts tunnel registrations from peers behind NAT ("Outbound-only" nodes).
+- Forwards encrypted data between registered peers. **The relay sees only ciphertext — it cannot read the content, manifests, or search queries.**
+- Participates in the DHT so clients discover it automatically.
+- Persists its node identity across restarts so clients can optionally pin it for security.
+
+## What a Relay does NOT do
+
+- It does **not** store or serve content. There is no disk-space cost beyond a tiny local state database.
+- It does **not** subscribe to or index any shares.
+- It does **not** require any special hardware or a heavy operating system. It uses very little CPU and memory.
+
+---
+
+## Installation
+
+The `scp2p-relay` executable is a standalone binary separate from the desktop app or the standard CLI.
+
+### Linux / macOS (One-line install)
+
+You can download and install the latest release directly:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | sh
+```
+*This installs to `/usr/local/bin` (with `sudo`) or `~/.local/bin` (without).*
+
+### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
+```
+*This installs to `%LOCALAPPDATA%\scp2p-relay\` and adds it to your user PATH.*
+
+### From Source (Cargo)
+
+If you have the Rust toolchain installed:
+```bash
+git clone https://github.com/techartdev/scp2p
+cd scp2p
+cargo install --path crates/scp2p-relay
+```
+
+---
+
+## Firewall and Port Forwarding
+
+For your relay to be useful, other nodes must be able to connect to it from the outside internet.
+
+You must open **both** of these default ports on your server's firewall or home router:
+- **Port 7001 (TCP):** TLS-over-TCP listener
+- **Port 7000 (UDP):** QUIC/UDP listener
+
+---
+
+## Quick Start
+
+To run a minimal relay listening on the default ports:
+
+```bash
+scp2p-relay
+```
+*Note: This is fine for a VPS/Server where the machine's bind address IS the public IP address.*
+
+### Joining the Network (Bootstrapping)
+
+To ensure your relay joins the global DHT and can be discovered by others, you should provide at least one bootstrap peer:
+
+```bash
+scp2p-relay --bootstrap seed1.example.com:7001 --bootstrap seed2.example.com:7001
+```
+
+### Running behind a NAT / Port Forwarding
+
+If your server is behind a NAT (e.g., a home network where the local IP is `192.168.1.100` but your public IP is `203.0.113.1`), you must explicitly tell the relay what public address to announce to the DHT:
+
+```bash
+scp2p-relay \
+    --bind-tcp 0.0.0.0:7001 \
+    --bind-quic 0.0.0.0:7000 \
+    --bootstrap seed1.example.com:7001 \
+    --announce tcp://203.0.113.1:7001 \
+    --announce quic://203.0.113.1:7000
+```
+
+---
+
+## Running as a Background Service
+
+If you are hosting a relay on a server, you will want it to run continuously in the background and restart automatically on failure.
+
+### Linux (systemd)
+
+Create a file at `/etc/systemd/system/scp2p-relay.service`:
+
+```ini
+[Unit]
+Description=SCP2P Relay Node
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=scp2p
+ExecStart=/usr/local/bin/scp2p-relay --bootstrap seed1.example.com:7001
+Restart=on-failure
+RestartSec=5s
+# Structured JSON logs integrate well with journald
+Environment=SCP2P_LOG_FORMAT=json
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now scp2p-relay
+# View logs:
+journalctl -u scp2p-relay -f
+```
+
+### Docker
+
+You can easily run the relay via Docker. Make sure to map a volume so the relay's identity key is persisted across container restarts.
+
+```bash
+docker run -d \
+  --name scp2p-relay \
+  --restart unless-stopped \
+  -p 7000:7000/udp \
+  -p 7001:7001/tcp \
+  -v /var/lib/scp2p-relay:/root/.local/share/scp2p-relay \
+  -e SCP2P_BOOTSTRAP=seed1.example.com:7001 \
+  scp2p-relay
+```
+
+### Windows (NSSM)
+
+You can use the Non-Sucking Service Manager (NSSM) to install the relay as a Windows background service.
+
+```cmd
+nssm install scp2p-relay "C:\path\to\scp2p-relay.exe"
+nssm set scp2p-relay AppParameters "--bootstrap seed1.example.com:7001"
+nssm start scp2p-relay
+```
+
+---
+
+## Node Identity and Backup
+
+On its first start, `scp2p-relay` generates a stable Ed25519 cryptographic identity. 
+
+This identity is stored in a local state database (`relay.db`). It is very important to **keep this file safe and backed up**. 
+
+If you lose this database, your relay will generate a new identity on the next startup. Any clients that have securely "pinned" your old relay public key will reject connections to the new one, breaking their routing until they update their configuration.
+
+**Default Database Locations:**
+- **Linux:** `~/.local/share/scp2p-relay/`
+- **macOS:** `~/Library/Application Support/scp2p-relay/`
+- **Windows:** `%APPDATA%\scp2p-relay\`
+
+You can override this location using the `--data-dir` flag or the `SCP2P_DATA_DIR` environment variable.

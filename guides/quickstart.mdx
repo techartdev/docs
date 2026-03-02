@@ -3,28 +3,33 @@ title: "Quickstart"
 description: "Get started with SCP2P by running a local node and publishing your first Share"
 ---
 
-This guide will walk you through compiling the SCP2P core reference CLI from source, starting a local node, and publishing your first Share.
+This guide will walk you through installing the SCP2P core reference CLI, starting a local node, and publishing your first Share.
 
-## Prerequisites
+## Installation
 
-Before you begin, ensure you have the Rust toolchain installed. SCP2P requires **Rust edition 2024**.
+The fastest way to install the `scp2p-cli` and `scp2p-relay` binaries is using our 1-line install scripts.
 
-<Steps>
-  <Step title="Install Rust">
-    If you don't have Rust installed, use `rustup`:
-    ```bash
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    ```
-    Verify your installation:
-    ```bash
-    cargo --version
-    ```
-  </Step>
-</Steps>
+### Linux / macOS
 
-## Building the CLI
+Install directly from the latest release:
+```bash
+curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | sh
+```
+*(Installs to `/usr/local/bin` with `sudo`, or `~/.local/bin` without).*
 
-The reference CLI is located in the `crates/scp2p-cli` directory of the workspace.
+### Windows (PowerShell)
+
+Install via PowerShell:
+```powershell
+irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
+```
+*(Installs to `%LOCALAPPDATA%\scp2p-relay\` and adds it to your user PATH).*
+
+---
+
+## Building from Source (Optional)
+
+If you prefer to compile from source, ensure you have the Rust toolchain installed (Rust edition 2024).
 
 <Steps>
   <Step title="Clone the repository">
@@ -36,22 +41,16 @@ The reference CLI is located in the `crates/scp2p-cli` directory of the workspac
   <Step title="Build the CLI">
     Compile the CLI in release mode for optimal performance.
     ```bash
-    cd crates/scp2p-cli
-    cargo build --release
+    cargo install --path crates/scp2p-cli
     ```
-  </Step>
-  <Step title="Locate the binary">
-    The compiled binary will be available at:
-    ```bash
-    ../target/release/scp2p-cli
-    ```
-    *Tip: You may want to add this binary to your system's `PATH`.*
   </Step>
 </Steps>
 
+---
+
 ## Running Your First Node
 
-Now that you have the CLI built, let's start a node.
+Now that you have the CLI installed, let's start a node.
 
 <Steps>
   <Step title="Start the daemon">
@@ -129,3 +128,4 @@ Now that you have a basic understanding of the publishing and downloading workfl
     Try out the graphical Tauri application.
   </Card>
 </CardGroup>
+

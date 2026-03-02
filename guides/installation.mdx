@@ -1,0 +1,87 @@
+---
+title: "Installation"
+description: "How to install the SCP2P core utilities and relays on your system"
+---
+
+The fastest way to install the SCP2P binaries (`scp2p-cli` and `scp2p-relay`) is by using our 1-line installation scripts. These scripts automatically detect your operating system and CPU architecture, download the latest pre-compiled release, and place the binaries in your system's `PATH`.
+
+## One-line Installation
+
+### Linux & macOS
+
+Open your terminal and run:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | sh
+```
+
+- **With `sudo` access:** Installs globally to `/usr/local/bin`.
+- **Without `sudo` access:** Installs locally to `~/.local/bin`.
+
+*You can pin a specific version or change the destination directory:*
+```bash
+curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | sh -s -- --version 0.1.0 --dir ~/bin
+```
+
+### Windows
+
+Open **PowerShell** or **Windows Terminal** and run:
+
+```powershell
+irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
+```
+
+- Installs to `%LOCALAPPDATA%\scp2p-relay\` (or a similar local app data folder).
+- Automatically adds the installation directory to your user `PATH`.
+
+*You can pin a version or change the install directory using environment variables before running the script:*
+```powershell
+$env:SCP2P_VERSION="0.1.0"
+$env:SCP2P_INSTALL_DIR="C:\tools\scp2p"
+irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
+```
+
+---
+
+## Pre-built Binaries (Manual Download)
+
+If you prefer not to use the installation scripts, you can download the standalone binaries directly from the [GitHub Releases page](https://github.com/techartdev/scp2p/releases).
+
+Available architectures:
+- `linux-x86_64`
+- `linux-aarch64` (Raspberry Pi, AWS Graviton)
+- `macos-x86_64` (Intel Macs)
+- `macos-aarch64` (Apple Silicon M1/M2/M3)
+- `windows-x86_64.exe`
+
+---
+
+## Building from Source
+
+If you want to build the tools from source, ensure you have the **Rust toolchain** installed (Rust Edition 2024).
+
+```bash
+git clone https://github.com/techartdev/scp2p.git
+cd scp2p
+
+# Install the CLI
+cargo install --path crates/scp2p-cli
+
+# Install the Relay node
+cargo install --path crates/scp2p-relay
+```
+
+---
+
+## Next Steps
+
+Once installed, you can start participating in the network:
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="bolt" href="/guides/quickstart">
+    Learn how to start a node and publish your first Share.
+  </Card>
+  <Card title="Host a Relay" icon="server" href="/guides/hosting-a-relay">
+    Learn how to configure and run a relay to help the network.
+  </Card>
+</CardGroup>
