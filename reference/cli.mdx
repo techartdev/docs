@@ -4,6 +4,7 @@ description: "Reference for the SCP2P interactive CLI (`scp2p`)"
 ---
 
 The current CLI is an interactive shell command named `scp2p` (from `crates/scp2p-cli`).
+It does not use verb-style subcommands such as `start` or `publish`.
 
 ## Launch
 
@@ -26,6 +27,11 @@ When it starts, it opens a menu-based shell and runs a local node.
 <ParamField query="--bootstrap" type="string">
   Bootstrap peers as `IP:PORT`. Repeat flag or use comma-separated values.
 </ParamField>
+
+Environment variable equivalents:
+- `SCP2P_DB`
+- `SCP2P_PORT`
+- `SCP2P_BOOTSTRAP`
 
 ## Main menu actions
 
@@ -56,3 +62,4 @@ When it starts, it opens a menu-based shell and runs a local node.
 - Press `Esc` in prompts to cancel and return.
 - If no peers are configured, sync/download prompts for extra peer addresses.
 - Use the same DB path between runs to keep identity, subscriptions, and cached manifests.
+- The shell starts a TLS DHT service bound to `0.0.0.0:<port>`.

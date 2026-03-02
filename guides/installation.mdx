@@ -1,9 +1,13 @@
 ---
 title: "Installation"
-description: "How to install the SCP2P desktop app, core utilities, and relays"
+description: "How to install the SCP2P desktop app, interactive CLI, and relay node"
 ---
 
-There are different ways to install SCP2P depending on whether you want the graphical Desktop App or the command-line core utilities (`scp2p-cli` and `scp2p-relay`).
+There are different ways to install SCP2P depending on whether you want:
+
+- The Desktop App (GUI)
+- The interactive CLI command (`scp2p`)
+- The relay daemon (`scp2p-relay`)
 
 ## Desktop App (Recommended)
 
@@ -16,9 +20,14 @@ Go to the [GitHub Releases page](https://github.com/techartdev/scp2p/releases) a
 
 ---
 
-## Command Line Utilities (CLI & Relay)
+## Command line tools (CLI and relay)
 
-If you are setting up a server, a headless node, or prefer the command line, you can install the `scp2p-cli` and `scp2p-relay` binaries using our 1-line installation scripts. These scripts automatically detect your operating system and CPU architecture, download the latest pre-compiled release, and place the binaries in your system's `PATH`.
+If you are setting up a server or prefer terminal workflows, use the install scripts.
+
+Important:
+- The default script target is the relay (`scp2p-relay`)
+- To install the CLI command, select `cli` tool
+- The CLI executable name is `scp2p` (not `scp2p-cli`)
 
 ### Linux & macOS
 
@@ -31,9 +40,16 @@ curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | 
 - **With `sudo` access:** Installs globally to `/usr/local/bin`.
 - **Without `sudo` access:** Installs locally to `~/.local/bin`.
 
-*You can pin a specific version or change the destination directory:*
+Install the CLI instead of relay:
+
 ```bash
-curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | sh -s -- --version 0.1.0 --dir ~/bin
+curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | sh -s -- --tool cli
+```
+
+Pin a version or change destination directory:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/techartdev/scp2p/main/install.sh | sh -s -- --tool cli --version v0.1.0 --dir ~/bin
 ```
 
 ### Windows
@@ -47,20 +63,33 @@ irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
 - Installs to `%LOCALAPPDATA%\scp2p-relay\` (or a similar local app data folder).
 - Automatically adds the installation directory to your user `PATH`.
 
-*You can pin a version or change the install directory using environment variables before running the script:*
+Install CLI command (`scp2p`) instead of relay:
+
 ```powershell
-$env:SCP2P_VERSION="0.1.0"
+$env:SCP2P_TOOL="cli"
+irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
+```
+
+Pin version or change install directory using environment variables:
+
+```powershell
+$env:SCP2P_TOOL="cli"
+$env:SCP2P_VERSION="v0.1.0"
 $env:SCP2P_INSTALL_DIR="C:\tools\scp2p"
 irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
 ```
 
 ---
 
-## Pre-built Binaries (Manual Download)
+## Pre-built binaries (manual download)
 
 If you prefer not to use the installation scripts for the CLI tools, you can download the standalone binaries directly from the [GitHub Releases page](https://github.com/techartdev/scp2p/releases).
 
-Available architectures:
+Common binary assets:
+- CLI: `scp2p-<os>-<arch>` (or `.exe` on Windows)
+- Relay: `scp2p-relay-<os>-<arch>` (or `.exe` on Windows)
+
+Available architectures include:
 - `linux-x86_64`
 - `linux-aarch64` (Raspberry Pi, AWS Graviton)
 - `macos-x86_64` (Intel Macs)
@@ -84,6 +113,13 @@ cargo install --path crates/scp2p-cli
 cargo install --path crates/scp2p-relay
 ```
 
+After installing, run:
+
+```bash
+scp2p --version
+scp2p-relay --version
+```
+
 ---
 
 ## Next Steps
@@ -92,7 +128,7 @@ Once installed, you can start participating in the network:
 
 <CardGroup cols={2}>
   <Card title="Quickstart Guide" icon="bolt" href="/guides/quickstart">
-    Learn how to start a node and publish your first Share.
+    Learn how to run the interactive CLI and desktop first-run flow.
   </Card>
   <Card title="Host a Relay" icon="server" href="/guides/hosting-a-relay">
     Learn how to configure and run a relay to help the network.
