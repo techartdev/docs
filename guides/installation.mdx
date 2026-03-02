@@ -1,11 +1,24 @@
 ---
 title: "Installation"
-description: "How to install the SCP2P core utilities and relays on your system"
+description: "How to install the SCP2P desktop app, core utilities, and relays"
 ---
 
-The fastest way to install the SCP2P binaries (`scp2p-cli` and `scp2p-relay`) is by using our 1-line installation scripts. These scripts automatically detect your operating system and CPU architecture, download the latest pre-compiled release, and place the binaries in your system's `PATH`.
+There are different ways to install SCP2P depending on whether you want the graphical Desktop App or the command-line core utilities (`scp2p-cli` and `scp2p-relay`).
 
-## One-line Installation
+## Desktop App (Recommended)
+
+For most users, the easiest way to get started is by downloading the pre-built desktop application. 
+
+Go to the [GitHub Releases page](https://github.com/techartdev/scp2p/releases) and download the appropriate installer for your OS:
+- **Windows:** `.msi` or `.exe`
+- **macOS:** `.dmg` or `.app.tar.gz`
+- **Linux:** `.AppImage` or `.deb`
+
+---
+
+## Command Line Utilities (CLI & Relay)
+
+If you are setting up a server, a headless node, or prefer the command line, you can install the `scp2p-cli` and `scp2p-relay` binaries using our 1-line installation scripts. These scripts automatically detect your operating system and CPU architecture, download the latest pre-compiled release, and place the binaries in your system's `PATH`.
 
 ### Linux & macOS
 
@@ -45,7 +58,7 @@ irm https://raw.githubusercontent.com/techartdev/scp2p/main/install.ps1 | iex
 
 ## Pre-built Binaries (Manual Download)
 
-If you prefer not to use the installation scripts, you can download the standalone binaries directly from the [GitHub Releases page](https://github.com/techartdev/scp2p/releases).
+If you prefer not to use the installation scripts for the CLI tools, you can download the standalone binaries directly from the [GitHub Releases page](https://github.com/techartdev/scp2p/releases).
 
 Available architectures:
 - `linux-x86_64`

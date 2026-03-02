@@ -1,15 +1,53 @@
 ---
 title: "Desktop App"
-description: "Running the SCP2P Tauri graphical interface"
+description: "Installing and running the SCP2P graphical interface"
 ---
 
 While the `scp2p-cli` provides full access to the core protocol, the easiest way for non-developers to use SCP2P is via the desktop application.
 
 The desktop app provides a user-friendly React interface built on top of the SCP2P Rust core using [Tauri](https://tauri.app/).
 
-## Prerequisites
+## Installation
 
-To build and run the desktop app from source, you need:
+The easiest way to get the desktop app is to download a pre-built installer for your operating system from the [GitHub Releases page](https://github.com/techartdev/scp2p/releases).
+
+| OS | Installer Type |
+|---|---|
+| **Windows** | `.msi` (or `.exe` setup) |
+| **macOS** | `.dmg` or `.app.tar.gz` |
+| **Linux** | `.AppImage` or `.deb` |
+
+Download the installer for your system, run it, and launch SCP2P like any standard application.
+
+---
+
+## App Features
+
+The current prototype of the desktop app supports the core SCP2P workflows:
+
+- **Identity Management:** View your node ID and manage your cryptographic keys.
+- **Publishing:** Drag and drop folders to create new public or private Shares.
+- **Subscriptions:** Paste an Invite Link or Share ID to subscribe to a peer's catalog.
+- **Local Search:** Instantly search across all your subscribed content.
+- **Downloads:** Click to initiate swarmed, verified downloads from available peers.
+
+---
+
+## Architecture of the App
+
+The desktop app is designed as a thin frontend over the robust core library.
+
+- **Frontend:** React + TypeScript + TailwindCSS. Located in `app/src/`.
+- **Backend/Core:** Rust using the `scp2p_core::NodeHandle` API. The Tauri commands are located in `app/src-tauri/src/main.rs`.
+- **Persistence:** Uses SQLite for data storage, managed by the Rust core, ensuring consistency whether the user is running the GUI or the CLI.
+
+---
+
+## Building from Source (Development Mode)
+
+If you want to contribute to the desktop app or run it from source, follow these steps.
+
+### Prerequisites
 
 1. **Rust toolchain** (Edition 2024)
 2. **Node.js** (v18+) and `npm`
@@ -20,7 +58,7 @@ To build and run the desktop app from source, you need:
 
 *(See the official [Tauri Prerequisites guide](https://tauri.app/v1/guides/getting-started/prerequisites) for detailed instructions for your OS).*
 
-## Running in Development Mode
+### Running the Dev Server
 
 The desktop app source code is located in the `app/` directory of the workspace.
 
@@ -44,21 +82,3 @@ The desktop app source code is located in the `app/` directory of the workspace.
     *Note: The first time you run this, compiling the Rust backend may take a few minutes.*
   </Step>
 </Steps>
-
-## App Features
-
-The current prototype of the desktop app supports the core SCP2P workflows:
-
-- **Identity Management:** View your node ID and manage your cryptographic keys.
-- **Publishing:** Drag and drop folders to create new public or private Shares.
-- **Subscriptions:** Paste an Invite Link or Share ID to subscribe to a peer's catalog.
-- **Local Search:** Instantly search across all your subscribed content.
-- **Downloads:** Click to initiate swarmed, verified downloads from available peers.
-
-## Architecture of the App
-
-The desktop app is designed as a thin frontend over the robust core library.
-
-- **Frontend:** React + TypeScript + TailwindCSS. Located in `app/src/`.
-- **Backend/Core:** Rust using the `scp2p_core::NodeHandle` API. The Tauri commands are located in `app/src-tauri/src/main.rs`.
-- **Persistence:** Uses SQLite for data storage, managed by the Rust core, ensuring consistency whether the user is running the GUI or the CLI.
