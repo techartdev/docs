@@ -1,0 +1,64 @@
+---
+title: "Distributed Hash Table (DHT)"
+description: "How SCP2P uses Kademlia-lite for peer routing and content discovery"
+---
+
+At the heart of SCP2P's decentralized discovery mechanism is a Distributed Hash Table (DHT). SCP2P implements a "Kademlia-lite" DHT tailored specifically for pointer resolution and swarm discovery rather than heavy data storage.
+
+## Kademlia-lite Routing
+
+The DHT overlay network is built on classic Kademlia principles:
+
+- **Node IDs:** Every node generates an Ed25519 identity keypair. The `NodeId` is derived as `SHA-256(node_pubkey)` truncated to 160 bits (20 bytes).
+- **Distance Metric:** Distance between nodes or between a node and a key is calculated using the XOR metric.
+- **k-Buckets:** Nodes maintain routing tables organized into k-buckets, where `K = 20`.
+- **Parallelism:** Lookup operations proceed iteratively with an `alpha = 3` parallelism factor.
+
+## What Does the DHT Store?
+
+In many traditional P2P networks (like older BitTorrent or IPFS), the DHT might store substantial metadata or even small chunks of content.
+
+In SCP2P, **the DHT stores only pointers.** 
+
+To keep the network fast and reduce storage burden on nodes, the maximum value size is strictly limited to **64 KiB**.
+
+There are three primary types of records stored in the SCP2P DHT:
+
+### 1. Share Head Pointers
+
+When a publisher updates their Share, they announce the new version to the DHT.
+
+- **Key:** `SHA-256("share:head:" || ShareId)`
+- **Value:** `ShareHead` object
+- **Contents:** The `ShareId`, the latest `seq` number, the new `ManifestId`, and an Ed25519 signature by the Share's private key proving authenticity.
+
+*Subscribers query this key periodically to know when to fetch a new Manifest.*
+
+### 2. Content Provider Hints
+
+When a node wants to download a file, it needs to know which peers currently have it.
+
+- **Key:** `SHA-256("content:prov:" || ContentId)`
+- **Value:** `Providers` list
+- **Contents:** A list of `PeerAddr` (IP, Port, Transport, PubKey) of nodes that claim to seed this `ContentId`.
+
+*Important: These are unverified hints. The downloading node must always verify the actual data chunks against the BLAKE3 hashes provided in the verified Manifest.*
+
+### 3. Manifest Location Hints (Optional)
+
+Helps nodes find where to download the actual CBOR bytes of a specific Manifest.
+
+- **Key:** `SHA-256("manifest:loc:" || ManifestId)`
+- **Value:** List of peers holding the Manifest blob.
+
+## TTL and Replication
+
+- **Replication:** Records are published to the `K=20` closest nodes to the target key.
+- **TTL (Time To Live):** Records have a default TTL of 24 hours.
+- **Self-seeding Obligation:** Nodes acting as content seeds must periodically (e.g., every 10-15 minutes) refresh the `Providers` entry in the DHT for the content they host to prevent it from expiring.
+
+## Node Capabilities and the DHT
+
+Not all nodes participate fully in the DHT routing table. 
+
+During the connection handshake, nodes advertise their capabilities. Mobile devices or resource-constrained nodes will typically advertise `dht=false` and `store=false`. These "light nodes" can still query the DHT via full nodes but will not be relied upon to route traffic or store records for the network.

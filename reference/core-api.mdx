@@ -1,0 +1,177 @@
+---
+title: "Core API"
+description: "Interacting with the SCP2P Rust Core Library"
+---
+
+The core logic of SCP2P is encapsulated in the `crates/scp2p-core` library. It provides a high-level asynchronous API via the `NodeHandle` struct.
+
+This allows developers to easily embed SCP2P functionality into desktop apps, mobile apps, or backend services.
+
+## Initialization
+
+To participate in the network, you must start a `Node`.
+
+```rust
+use scp2p_core::{Node, RuntimeConfig};
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let config = RuntimeConfig::default();
+    
+    // Starts the background networking tasks and returns a handle
+    let node_handle = Node::start(config).await?;
+    
+    Ok(())
+}
+```
+
+## NodeHandle API
+
+The `NodeHandle` provides the thread-safe interface to interact with the running node.
+
+### Identity & Lifecycle
+
+<ResponseField name="runtime_config" type="fn">
+  Returns the current configuration of the node.
+  ```rust
+  fn runtime_config(&self) -> RuntimeConfig
+  ```
+</ResponseField>
+
+### Peers
+
+<ResponseField name="connect" type="async fn">
+  Attempt to connect to a specific peer multiaddress.
+  ```rust
+  async fn connect(&self, peer_addr: PeerAddr) -> anyhow::Result<()>
+  ```
+</ResponseField>
+
+<ResponseField name="peer_records" type="async fn">
+  Retrieve a list of known peers from the local database.
+  ```rust
+  async fn peer_records(&self) -> Vec<PeerRecord>
+  ```
+</ResponseField>
+
+### Subscriptions
+
+<ResponseField name="subscribe" type="async fn">
+  Subscribe to a specific Share by its ID.
+  ```rust
+  async fn subscribe(&self, share_id: ShareId) -> anyhow::Result<()>
+  ```
+</ResponseField>
+
+<ResponseField name="unsubscribe" type="async fn">
+  Unsubscribe from a Share.
+  ```rust
+  async fn unsubscribe(&self, share_id: ShareId) -> anyhow::Result<()>
+  ```
+</ResponseField>
+
+<ResponseField name="sync_subscriptions" type="async fn">
+  Force a manual sync of all subscribed shares from the DHT.
+  ```rust
+  async fn sync_subscriptions(&self) -> anyhow::Result<()>
+  ```
+</ResponseField>
+
+<ResponseField name="list_subscriptions" type="async fn">
+  List all current subscriptions.
+  ```rust
+  async fn list_subscriptions(&self) -> Vec<SubscriptionView>
+  ```
+</ResponseField>
+
+### Publishing
+
+<ResponseField name="publish_text" type="async fn">
+  Publish a simple text payload as a new Share.
+  ```rust
+  async fn publish_text(&self, text: String, opts: PublishOpts) -> anyhow::Result<ShareId>
+  ```
+</ResponseField>
+
+<ResponseField name="publish_files" type="async fn">
+  Publish a specific list of files.
+  ```rust
+  async fn publish_files(&self, paths: Vec<PathBuf>, opts: PublishOpts) -> anyhow::Result<ShareId>
+  ```
+</ResponseField>
+
+<ResponseField name="publish_folder" type="async fn">
+  Hash a local directory, create a new Manifest, and announce it.
+  ```rust
+  async fn publish_folder(&self, dir_path: PathBuf, opts: PublishOpts) -> anyhow::Result<ShareId>
+  ```
+</ResponseField>
+
+<ResponseField name="list_own_shares" type="async fn">
+  List Shares published by this node.
+  ```rust
+  async fn list_own_shares(&self) -> Vec<PublicShareView>
+  ```
+</ResponseField>
+
+### Browse
+
+<ResponseField name="list_public_shares_from_peers" type="async fn">
+  Discover public shares announced by connected peers.
+  ```rust
+  async fn list_public_shares_from_peers(&self) -> Vec<PublicShareView>
+  ```
+</ResponseField>
+
+<ResponseField name="list_share_items" type="async fn">
+  List the items available in a specific known Share.
+  ```rust
+  async fn list_share_items(&self, share_id: ShareId) -> Vec<ShareItemView>
+  ```
+</ResponseField>
+
+### Search
+
+<ResponseField name="search" type="async fn">
+  Search locally across all subscribed Manifests.
+  ```rust
+  async fn search(&self, query: &str, filters: SearchFilters) -> anyhow::Result<Vec<SearchResult>>
+  ```
+</ResponseField>
+
+### Downloading & Seeding
+
+<ResponseField name="download_items" type="async fn">
+  Initiate a swarmed download for specific items from a Share to a target directory.
+  ```rust
+  async fn download_items(
+      &self, 
+      share_id: ShareId, 
+      content_ids: Vec<ContentId>, 
+      target_dir: PathBuf
+  ) -> anyhow::Result<()>
+  ```
+</ResponseField>
+
+<ResponseField name="reannounce_seeded_content" type="async fn">
+  Refresh DHT `Providers` entries for all locally held blobs. Should be called periodically.
+  ```rust
+  async fn reannounce_seeded_content(&self, self_addr: PeerAddr) -> anyhow::Result<usize>
+  ```
+</ResponseField>
+
+### Communities
+
+<ResponseField name="join_community" type="async fn">
+  Join a specific community share.
+  ```rust
+  async fn join_community(&self, share_id: ShareId, share_pubkey: PubKey) -> anyhow::Result<()>
+  ```
+</ResponseField>
+
+<ResponseField name="list_communities" type="async fn">
+  List communities this node is a part of.
+  ```rust
+  async fn list_communities(&self) -> Vec<CommunityView>
+  ```
+</ResponseField>

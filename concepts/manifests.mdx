@@ -1,0 +1,85 @@
+---
+title: "Manifests & Catalogs"
+description: "Understanding how content is structured, signed, and published in SCP2P"
+---
+
+In SCP2P, a **Share** represents a publisher's identity along with a catalog of items they are making available. The state of this catalog is described by a **Manifest**.
+
+## What is a Manifest?
+
+A Manifest is a cryptographically signed description of a Share's current state. It acts as the "catalog" that users subscribe to.
+
+Key characteristics of a Manifest:
+- **Immutable Versioning:** Every update to a Share creates a new Manifest with a monotonically increasing sequence number.
+- **Signed:** Manifests are signed by the publisher's Ed25519 private key, ensuring authenticity and integrity.
+- **CBOR Encoded:** For efficient transmission and deterministic serialization, Manifests are encoded using Concise Binary Object Representation (CBOR).
+
+## Manifest Structure
+
+A Manifest (v1) contains the following core fields:
+
+<ResponseField name="version" type="integer">
+  The version of the manifest format (currently `1`).
+</ResponseField>
+
+<ResponseField name="share_pubkey" type="bytes32">
+  The Ed25519 public key of the publisher.
+</ResponseField>
+
+<ResponseField name="share_id" type="bytes32">
+  The unique identifier for the share (derived from the pubkey).
+</ResponseField>
+
+<ResponseField name="seq" type="u64">
+  Monotonically increasing sequence number.
+</ResponseField>
+
+<ResponseField name="created_at" type="u64">
+  Unix timestamp (seconds) of creation.
+</ResponseField>
+
+<ResponseField name="visibility" type="string">
+  `"public"` (subscribable from browse scope) or `"private"` (requires explicit Share ID to subscribe).
+</ResponseField>
+
+<ResponseField name="items" type="array">
+  List of `ItemV1` objects representing the actual files/content in the catalog.
+</ResponseField>
+
+<ResponseField name="signature" type="bytes64">
+  Ed25519 signature over the canonical CBOR representation of all preceding fields.
+</ResponseField>
+
+### Items within a Manifest
+
+Each item in the catalog is described by an `ItemV1` object:
+
+```json
+{
+  "content_id": "bytes32", // BLAKE3 hash of the entire file
+  "size": 1048576,         // File size in bytes
+  "name": "example.txt",   // Display name
+  "path": "docs/example.txt", // Relative path for folders (optional)
+  "mime": "text/plain",    // Optional MIME type
+  "tags": ["docs"],        // Optional metadata tags
+  "chunks": ["bytes32"]    // List of BLAKE3 hashes for each 256KiB chunk
+}
+```
+
+## Content Hashing and Chunks
+
+SCP2P uses **BLAKE3** for all content addressing due to its high performance and security.
+
+Large files are divided into fixed-size **256 KiB chunks**.
+- The overall file identity is `content_id = BLAKE3(whole_file)`.
+- The manifest includes an array of `BLAKE3(chunk)` hashes.
+
+This allows clients to verify data integrity incrementally as chunks are downloaded from various peers in the swarm.
+
+## Publishing Lifecycle
+
+1. **Create/Update:** The publisher adds or removes files from their Share.
+2. **Build Manifest:** The node hashes the files, builds the `ItemV1` list, increments the `seq` number, and constructs the Manifest object.
+3. **Sign:** The node signs the canonical CBOR of the Manifest using the Share's private key.
+4. **Announce:** The node computes the `ManifestId` (`BLAKE3(manifest_bytes)`) and updates the DHT with a new `ShareHead` pointer.
+5. **Distribute:** Connected peers subscribed to this Share notice the DHT update, fetch the new Manifest, verify the signature, and update their local search index.

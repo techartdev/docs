@@ -1,0 +1,57 @@
+---
+title: "Protocol Overview"
+description: "Core design principles and message framing in the SCP2P network"
+---
+
+The SCP2P protocol is designed to provide secure, subscription-scoped, peer-to-peer data distribution. It prioritizes data sovereignty, local-first search, and cryptographic integrity over global reach.
+
+## Core Design Principles
+
+1.  **Subscription-Scoped Discovery:** There is no global search index. Nodes only discover and index content for Shares they have explicitly subscribed to or communities they have joined.
+2.  **Cryptographic Sovereignty:** Every node and Share publisher is identified by a cryptographic key pair (Ed25519). Content is strictly addressed by cryptographic hashes (BLAKE3).
+3.  **Pointer-Only DHT:** The Distributed Hash Table (DHT) is kept lightweight. It is used exclusively to route pointers (like "where is the latest manifest?" or "who is seeding this chunk?") rather than storing actual content payloads.
+4.  **Multi-Transport:** The protocol operates over modern encrypted transports, preferring QUIC for its multiplexing and UDP NAT-friendliness, with TLS 1.3 over TCP as a fallback.
+
+## Node Identities
+
+Every node in the SCP2P network generates an **Ed25519 key pair** upon initialization. 
+
+The `NodeId` used for DHT routing and peer identification is derived by hashing the public key and truncating it:
+`NodeId = SHA-256(node_pubkey)[..20]` (160 bits, suitable for XOR Kademlia distance).
+
+Publisher identities operate similarly but are distinct from node identities. A single node can host multiple publisher identities.
+
+## Message Framing
+
+At the application layer, all messages exchanged between peers are serialized using **CBOR** (Concise Binary Object Representation) using strictly positional encoding (tuples/arrays) for deterministic signing where necessary.
+
+Every message is wrapped in a standard Envelope:
+
+```rust
+struct Envelope {
+    /// Identifies the message type (e.g., PEX_REQUEST, GET_CHUNK)
+    pub msg_type: u16,
+    
+    /// Request identifier to correlate responses (0 for fire-and-forget)
+    pub req_id: u32,
+    
+    /// Bitfield for message metadata (e.g., is_response, is_error)
+    pub flags: u16,
+    
+    /// The CBOR-encoded payload specific to the msg_type
+    pub payload: Vec<u8>,
+}
+```
+
+### Deterministic Serialization
+
+To guarantee signature verification across different architectures, signed payloads (like `ManifestV1`, `ShareHead`, and `RelayAnnouncement`) avoid dictionary/map encoding. Because map key ordering in CBOR can be implementation-defined, SCP2P uses strict array-based tuple encoding to ensure byte-for-byte deterministic serialization before passing the payload to the Ed25519 signing functions.
+
+## Protocol Flows
+
+The SCP2P protocol encompasses several interacting systems:
+
+*   **Handshake & Session:** Establishing secure, mutually authenticated tunnels.
+*   **Discovery (PEX & DHT):** Finding peers and locating pointers.
+*   **Sync:** Tracking the monotonically increasing sequence numbers of subscribed Share Manifests.
+*   **Content Transfer:** Requesting and verifying raw data chunks from a swarm of providers.

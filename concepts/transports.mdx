@@ -1,0 +1,57 @@
+---
+title: "Transports & Networking"
+description: "How SCP2P nodes connect, communicate, and traverse NATs"
+---
+
+SCP2P is designed to operate in diverse and restrictive network environments, from local LANs to mobile cellular networks behind strict firewalls.
+
+## Supported Protocols
+
+SCP2P implements a multi-transport architecture to maximize connectivity.
+
+### Primary: QUIC (over UDP)
+QUIC is the preferred transport for all SCP2P connections.
+- **NAT Friendly:** UDP hole punching is generally more successful than TCP.
+- **Multiplexing:** Multiple streams (e.g., control messages, multiple chunk downloads) can operate concurrently over a single connection without head-of-line blocking.
+- **Fast Handshake:** Combines cryptographic and transport handshakes to reduce latency.
+
+### Fallback: TCP with TLS 1.3
+For environments where UDP is blocked or heavily throttled, SCP2P falls back to standard TCP connections secured with TLS 1.3.
+- Mobile devices ("light nodes") may prefer TCP fallback when battery or OS constraints limit persistent UDP connections.
+
+## Session Security & Identity Binding
+
+Every connection in SCP2P is mutually authenticated.
+
+- **Ed25519 Identities:** Every node possesses an Ed25519 identity keypair.
+- **Authentication:** During the TLS 1.3 handshake (both in TCP and inside QUIC), peers use self-signed certificates or custom signed handshake messages.
+- **Verification:** The connection is only established if both sides can cryptographically prove they own the private key corresponding to their advertised `NodeId` (`SHA-256(node_pubkey)`).
+
+## Message Framing
+
+Once a secure tunnel is established, all application-level messages are framed and serialized using **CBOR** (Concise Binary Object Representation).
+
+Every message envelope consists of:
+- `type` (u16): The message type identifier (e.g., PEX, GET_MANIFEST, GET_CHUNK).
+- `req_id` (u32): Request identifier to correlate responses with requests (0 for fire-and-forget).
+- `flags` (u16): Bitfield for metadata (e.g., is_response, is_error).
+- `payload` (bytes): The CBOR-encoded struct specific to the message type.
+
+## Reachability & NAT Traversal
+
+Nodes in SCP2P exist in one of three reachability states:
+
+1. **Direct:** The node has a public IP or successfully forwarded ports. It can accept inbound QUIC and TCP connections.
+2. **Outbound-only:** The node is behind a NAT or firewall. It can initiate outbound connections to other nodes but cannot receive incoming connections directly.
+3. **Relayed:** The node utilizes a Relay peer to receive incoming connections.
+
+### Relay Role
+
+To ensure "Outbound-only" nodes can still host content or be reached by the network, SCP2P supports optional Relays.
+
+- **No Fixed Infrastructure:** Relays are just standard SCP2P peers that advertise the `relay=true` capability.
+- **How it works:** 
+  1. An outbound-only node connects to a Relay and registers, receiving a `relay_slot_id`.
+  2. The Relay advertises its own address with the target node's `relay_slot_id`.
+  3. When a third peer wants to connect to the outbound-only node, it connects to the Relay and requests to open a stream to that `relay_slot_id`.
+- **Privacy:** Connections through a relay are end-to-end encrypted. The relay only routes encrypted QUIC/TCP streams and cannot read the underlying CBOR messages or file chunks.
