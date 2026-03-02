@@ -1,0 +1,56 @@
+---
+title: "Content Transfer & Swarming"
+description: "How SCP2P nodes locate providers, request data, and verify integrity"
+---
+
+Because SCP2P has no central storage servers, downloading a file means requesting pieces of that file from other nodes in the network.
+
+This process is designed to be highly resilient, parallelized (swarming), and cryptographically verified at every step.
+
+## The Content Identity
+
+In SCP2P, you never ask for a file by its name (e.g., "give me `video.mp4`"). You ask for it by its cryptographic identity.
+
+When a publisher adds a file to a Share, the node processes it as follows:
+1. The file is read sequentially.
+2. It is broken down into fixed **256 KiB chunks**.
+3. Each chunk is hashed using **BLAKE3**.
+4. The entire file is hashed to produce the `ContentId`.
+5. The `ContentId` and the array of chunk hashes are recorded in the Share's `Manifest`.
+
+## Provider Discovery
+
+When a user decides to download a `ContentId`, their node must first figure out who is seeding it. 
+
+The node uses multiple strategies concurrently:
+- **DHT Lookup:** It queries the DHT for the key `SHA-256("content:prov:" || ContentId)`. Nodes that have the file (or parts of it) publish hints here.
+- **Direct Query:** It asks currently connected peers: "Do you have this `ContentId`?"
+- **PEX Propagation:** As it learns about new peers via Peer Exchange (PEX), it adds them to the candidate pool for the download.
+
+*Note: These provider hints are entirely untrusted. A malicious node can claim to have a file it doesn't possess. The protocol handles this gracefully through verification.*
+
+## Swarming and Parallel Transfer
+
+SCP2P downloads are "swarmed". A client maintains a download manager for each active transfer.
+
+1. **Concurrency Cap:** The client requests multiple chunks in parallel across available providers (defaulting to 8 concurrent streams).
+2. **Peer Scoring:** The scheduler uses a scoring function `score × (1 / (in_flight + 1))` to assign chunks. This naturally load-balances requests, deprioritizing peers that are slow or already handling multiple requests.
+3. **Pipelining:** Because the primary transport is QUIC, the client multiplexes many `GET_CHUNK` requests over a single connection without head-of-line blocking.
+
+## Verification and Resilience
+
+As chunks arrive from various peers, they are held in memory temporarily.
+
+1. **Chunk Verification:** Before writing a chunk to the persistent `ContentBlobStore`, the client hashes the received bytes. If `BLAKE3(received_bytes)` does not match the expected hash from the verified Manifest, the chunk is **rejected**.
+2. **Retry Queue:** Rejected or timed-out chunks are placed in a retry queue and assigned to a different peer. The malicious or failing peer's score is degraded.
+3. **Stall Protection:** If no forward progress is made after a certain number of scheduling attempts (e.g., all peers are timing out), the download is cleanly aborted to prevent infinite hangs.
+4. **Final Verification:** Once all chunks are successfully downloaded and verified, the client performs one final `BLAKE3` pass over the reassembled file to ensure the overall `ContentId` matches.
+
+## Self-Seeding Obligation
+
+A core principle of the network's health is that downloaders become seeders.
+
+Once a node successfully completes a verified download, it:
+1. Immediately serves those chunks to any requesting peers from its local Blob Store.
+2. Publishes a `Providers` record to the DHT indicating it now holds the `ContentId`.
+3. Periodically (e.g., every 10-15 minutes) re-announces its provider status to the DHT to prevent the record's TTL from expiring.

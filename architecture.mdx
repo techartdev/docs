@@ -1,0 +1,88 @@
+---
+title: "Architecture"
+description: "High-level architecture and system design of SCP2P"
+---
+
+## Overview
+
+SCP2P (Subscribed Catalog P2P) is designed as a fully decentralized, peer-to-peer network without mandatory central services. The architecture is modular and designed to work across a variety of environments, from always-on desktop nodes to constrained mobile devices.
+
+## Node Roles & Capabilities
+
+Nodes in the SCP2P network can advertise different capabilities during the handshake process. This allows the network to adapt to the resources available on each device.
+
+| Capability | Description | Default for Phones |
+| :--- | :--- | :--- |
+| **DHT** | Participates in the routing table and queries | False |
+| **Store** | Willing to store DHT values beyond the minimal requirement | False |
+| **Relay** | Willing to relay connectivity for others (NAT traversal) | False |
+| **Content Seed** | Willing to serve content chunks to other peers | True (when active) |
+| **Mobile Light** | Hint for routing and expectations | True |
+
+*Note: Desktop nodes are generally considered "full nodes" and can route, relay, and store data.*
+
+## Network Topology
+
+SCP2P uses a combination of direct connections and an overlay network to facilitate discovery and data transfer.
+
+### Transports
+
+The primary transport for SCP2P is **QUIC** over UDP. QUIC is chosen for its NAT-friendliness, multiplexing capabilities, and low-latency connection establishment.
+
+A fallback to **TLS 1.3 over TCP** is available for environments where UDP is blocked or constrained (e.g., certain mobile networks or strict corporate firewalls).
+
+### Bootstrapping & Discovery
+
+Nodes join the network without relying on brute-force scanning. They can bootstrap via:
+1. **Invite Links:** Contain a Share ID and a few bootstrap multiaddresses.
+2. **Bundled Seed Lists:** Community-run seeds shipped with the client.
+3. **LAN Discovery:** mDNS/UDP broadcast for finding local peers instantly.
+
+Once connected, nodes use **Peer Exchange (PEX)** to learn about other active nodes in the network, helping to build a robust local peer database.
+
+### DHT (Kademlia-lite)
+
+The Distributed Hash Table (DHT) is a core component for discovery in SCP2P. It is based on a lightweight Kademlia implementation.
+
+Unlike traditional P2P networks that store large amounts of data in the DHT, SCP2P uses the DHT primarily for **pointers**.
+
+The DHT stores:
+- **Share Head Pointers:** Points to the latest version of a Share's manifest.
+- **Content Provider Hints:** Hints about which nodes currently hold specific content chunks (seeding swarm).
+
+*For a deep dive into the DHT, see the [DHT Concepts](/concepts/dht) page.*
+
+## Content Flow
+
+The lifecycle of content in SCP2P revolves around "Shares" and "Manifests".
+
+1. **Publishing:** A user creates a "Share" (a catalog of items) and signs it with their Ed25519 key pair, producing a **Manifest**.
+2. **Announcing:** The node publishes a pointer to the latest Manifest to the DHT (`ShareHead`).
+3. **Subscribing:** Other users subscribe to the Share ID. Their nodes periodically check the DHT for updates.
+4. **Syncing:** When a new Manifest is detected, the subscribing node fetches it from peers, verifies the signature, and updates its local search index.
+5. **Downloading:** When a user wants a specific file from a subscribed Share, their node looks up provider hints in the DHT and initiates a parallel, swarmed download of chunks from available peers.
+
+*Read more about Manifests in the [Manifests Concepts](/concepts/manifests) page.*
+
+## Privacy and Search
+
+A critical architectural decision in SCP2P is the **absence of global search**.
+
+Search is performed entirely locally on the user's device, strictly over the Manifests of the Shares they have explicitly subscribed to.
+
+This design provides:
+- **Zero Tracking:** No central server logs search queries.
+- **Curated Results:** Eliminates global spam and SEO manipulation.
+- **Offline Capability:** Search works even when disconnected from the internet, as the index is local.
+
+## Storage Model
+
+Client nodes persist state locally to ensure fast startup and offline capabilities.
+
+Data persisted locally includes:
+- Node key pairs (Ed25519)
+- Peer database (addresses and last seen timestamps)
+- Active subscriptions
+- Cached Manifests
+- Local SQLite search index
+- Partial and completed content downloads

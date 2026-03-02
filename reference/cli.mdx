@@ -1,0 +1,114 @@
+---
+title: "CLI Reference"
+description: "Command-line interface for interacting with SCP2P nodes"
+---
+
+The SCP2P project includes a reference CLI implementation located in `crates/scp2p-cli`. This CLI serves as both a functional node runner and a manual test harness.
+
+## Installation
+
+Currently, the CLI can be built from source using Cargo:
+
+```bash
+cd crates/scp2p-cli
+cargo build --release
+```
+
+The resulting binary will be at `../target/release/scp2p-cli`.
+
+## Global Options
+
+All CLI commands accept the following global options:
+
+<ParamField query="--config" type="string">
+  Path to a custom configuration file.
+</ParamField>
+
+<ParamField query="--data-dir" type="string">
+  Path to the directory where node state, keys, and databases are stored. Defaults to an OS-specific app data directory.
+</ParamField>
+
+<ParamField query="--log-level" type="string">
+  Set the logging level (`trace`, `debug`, `info`, `warn`, `error`).
+</ParamField>
+
+## Commands
+
+### `start`
+Starts a long-running SCP2P node.
+
+```bash
+scp2p-cli start [OPTIONS]
+```
+**Options:**
+- `--relay`: Start the node with relay capabilities enabled.
+- `--port <PORT>`: Specify the UDP/TCP port to bind to.
+
+### `publish`
+Publish a new Share or update an existing one.
+
+```bash
+scp2p-cli publish [OPTIONS] <PATH>
+```
+**Options:**
+- `--name <NAME>`: Human-readable name for the Share.
+- `--private`: Mark the Share as private (not discoverable without the explicit ID).
+
+### `subscribe`
+Subscribe to a Share by its ID.
+
+```bash
+scp2p-cli subscribe <SHARE_ID>
+```
+
+### `search`
+Search across locally indexed, subscribed Shares.
+
+```bash
+scp2p-cli search <QUERY>
+```
+Returns a list of matching `ContentId`s and associated metadata.
+
+### `download`
+Download a specific item from a subscribed Share.
+
+```bash
+scp2p-cli download <CONTENT_ID> [OPTIONS]
+```
+**Options:**
+- `--out <DIR>`: Output directory for the downloaded file. Defaults to current directory.
+
+### `peers`
+List currently connected peers and known routing table entries.
+
+```bash
+scp2p-cli peers
+```
+
+## Example Workflow
+
+1. **Start your node:**
+   ```bash
+   scp2p-cli start
+   ```
+
+2. **(In a new terminal) Publish a directory:**
+   ```bash
+   scp2p-cli publish --name "My Docs" ./docs
+   ```
+   *Outputs a `<SHARE_ID>`.*
+
+3. **Share the `<SHARE_ID>` with a friend. They run:**
+   ```bash
+   scp2p-cli subscribe <SHARE_ID>
+   ```
+
+4. **They search their subscriptions:**
+   ```bash
+   scp2p-cli search "spec"
+   ```
+
+5. **They download the file:**
+   ```bash
+   scp2p-cli download <CONTENT_ID>
+   ```

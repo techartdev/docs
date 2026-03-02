@@ -1,0 +1,55 @@
+---
+title: "Handshake & Security"
+description: "How SCP2P establishes secure, mutually authenticated peer connections"
+---
+
+Before any application-level messages (like DHT lookups or file transfers) can occur, two SCP2P nodes must establish a secure session.
+
+The protocol uses a **3-message handshake flow** combined with ephemeral key exchange to ensure forward secrecy and mutual identity verification.
+
+## The Trust Boundary
+
+A core principle of SCP2P is that connection security must not rely entirely on the transport layer (e.g., standard TLS certificate authorities).
+
+Because any peer can generate an identity and act as a node, the handshake explicitly binds the **transport session** to the **Ed25519 node identity**. 
+
+## The Handshake Flow
+
+Whether the underlying transport is QUIC or TCP, the application-level handshake follows these steps:
+
+### 1. Connection Establishment & Ephemeral Exchange
+The initiator opens a connection. The underlying transport (e.g., rustls/QUIC) performs an X25519 ephemeral key exchange.
+This establishes a secure, encrypted tunnel, providing **Forward Secrecy**. However, at this stage, neither side has proven their long-term SCP2P identity.
+
+### 2. Client Hello (Message 1)
+The initiating node sends a `ClientHello` message containing:
+- Its public Ed25519 identity key (`node_pubkey`).
+- A randomly generated nonce (from a CSPRNG) to prevent replay attacks.
+- A current UNIX timestamp (used to reject heavily skewed or old messages).
+- A signature over the nonce and timestamp using its private Ed25519 key.
+- Its advertised node capabilities (e.g., `dht: true`, `relay: false`).
+
+### 3. Server Hello (Message 2)
+The receiving node validates the `ClientHello` signature and freshness. If valid, it responds with a `ServerHello` containing:
+- Its public Ed25519 identity key.
+- The client's original nonce (echoed back to prove liveness).
+- Its own randomly generated server nonce.
+- A signature over both nonces and its timestamp.
+- Its advertised capabilities.
+
+### 4. Client Ack (Message 3)
+The initiating node verifies the server's signature and that its own nonce was echoed correctly. It then sends a final `ClientAck` containing:
+- A signature echoing the server's nonce.
+
+## Post-Handshake
+
+Once the 3-message flow completes successfully:
+1. Both nodes have cryptographically verified that the other possesses the private key corresponding to their advertised `NodeId`.
+2. Both nodes know the other's capabilities.
+3. The underlying X25519 tunnel encrypts all subsequent CBOR envelopes.
+
+## Optional Peer Pinning (TOFU)
+
+In adversarial environments (e.g., connecting via an untrusted public relay), SCP2P supports optional peer pinning.
+
+If a node expects to connect to a specific peer (e.g., a known community bootstrap node), it can require the `expected_remote_pubkey` during the handshake. If the remote peer presents a different identity, the connection is immediately aborted, preventing Man-in-the-Middle (MITM) or identity substitution attacks.

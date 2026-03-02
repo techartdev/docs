@@ -1,0 +1,59 @@
+---
+title: "Discovery & Routing"
+description: "How SCP2P nodes find each other and route traffic across the network"
+---
+
+Because SCP2P has no central index or tracker, nodes must actively participate in decentralized discovery mechanisms to find peers, locate content, and route traffic around NATs (Network Address Translators).
+
+Discovery in SCP2P operates on three main layers: Peer Exchange (PEX), the Distributed Hash Table (DHT), and Community Scopes.
+
+## 1. Peer Exchange (PEX)
+
+The fastest way a node learns about the active network is by talking to its immediate neighbors.
+
+- **PEX Messages:** On successful connection, peers can exchange `PEX_OFFER` and `PEX_REQUEST` messages.
+- **Freshness Filter:** A node will only offer peers that it has seen successfully connected within the last 24 hours.
+- **Random Sampling:** To prevent routing table bias and avoid creating network "hotspots", PEX offers a random sample of up to 64 peers from the local database.
+
+This gossip protocol ensures that once a node connects to a few initial bootstrap nodes, it quickly discovers a wide web of active participants.
+
+## 2. DHT Keyspaces
+
+While PEX finds *who* is online, the DHT finds *what* they have. The Kademlia-lite DHT routes queries to the nodes mathematically closest to a given target key.
+
+To prevent abuse, the DHT strictly validates the keyspace of incoming `STORE` requests. Only specific, well-known prefixes are accepted:
+
+### `share:head:*`
+- **Purpose:** Locates the latest Manifest for a given Share.
+- **Key:** `SHA-256("share:head:" || ShareId)`
+- **Value:** A `ShareHead` structure containing the latest sequence number and the new `ManifestId`, signed by the Share's publisher key.
+
+### `content:prov:*`
+- **Purpose:** Hints for swarmed downloads.
+- **Key:** `SHA-256("content:prov:" || ContentId)`
+- **Value:** A list of `PeerAddr` belonging to nodes that are currently seeding chunks for this `ContentId`.
+
+### `manifest:loc:*`
+- **Purpose:** Hints for locating the actual CBOR blob of a Manifest.
+- **Key:** `SHA-256("manifest:loc:" || ManifestId)`
+- **Value:** A list of `PeerAddr` holding the manifest.
+
+*Any `STORE` request attempting to write to an unknown prefix is immediately rejected, protecting the network from being used as a generic, unmetered data store.*
+
+## 3. Community-Scoped Discovery
+
+SCP2P purposefully avoids a "global search" or global autodiscovery model to prevent spam and preserve privacy. Instead, non-LAN discovery is bounded by **Communities**.
+
+- **Explicit Join:** To join a community, a user must have a valid `ShareId` and `share_pubkey`. It is not auto-discovered.
+- **Participant Probing:** Once joined, a node can discover other participants actively online within that specific community.
+- **Public Share Browse:** Within a community, nodes can browse "public" shares explicitly published to that community, allowing localized discovery without exposing the shares to the entire internet.
+
+## Reachability and Relays
+
+Discovery is only useful if nodes can actually connect to each other. Many users are behind restrictive firewalls or NATs ("Outbound-only" reachability).
+
+To bridge these gaps, SCP2P utilizes **Relays**:
+1. **No Fixed Infrastructure:** Any capable node can advertise itself as a relay.
+2. **Registration:** An outbound-only node connects to a Relay and registers for a **randomized Relay Slot ID**.
+3. **Tunneling:** Other nodes discover the firewalled node's `PeerAddr` (which includes the Relay's IP and the specific Slot ID) via PEX or the DHT.
+4. **End-to-End Encryption:** When a peer connects via the relay, the relay merely forwards the encrypted transport streams. It cannot read the CBOR envelopes or content chunks.

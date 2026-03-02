@@ -1,97 +1,98 @@
 ---
 title: "Introduction"
-description: "Welcome to the new home for your documentation"
+description: "Welcome to SCP2P (Subscribed Catalog P2P) documentation"
 ---
 
-## Setting up
+Welcome to **SCP2P** (Subscribed Catalog P2P) — a decentralized, cryptographically-secure communication and data sharing protocol designed for the modern web.
 
-Get your documentation site up and running in minutes.
+SCP2P is built on a simple yet powerful idea: **you should own your data and your discovery.** Unlike traditional platforms that rely on central servers or global uncurated search, SCP2P empowers individuals and communities to build their own private or public networks of trust.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+## What is SCP2P?
 
-## Make it yours
+SCP2P is a peer-to-peer (P2P) software suite and protocol that allows users to publish, discover, and share "Catalogs" (Manifests) of content without a middleman.
 
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Subscription-Centric" icon="rss">
+    You only see and search what you choose to follow. No global noise, just curated signal.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Fully Decentralized" icon="network-wired">
+    No central servers, no "cloud" ownership. Data moves directly between peers.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Cryptographically Secure" icon="shield-halved">
+    Every share is signed by its publisher, and every byte of data is verified for integrity using modern primitives (Ed25519, BLAKE3).
   </Card>
+  <Card title="NAT-Friendly" icon="router">
+    Designed to work across home routers and mobile networks using QUIC and intelligent relaying.
+  </Card>
+  <Card title="Zero Configuration" icon="wand-magic-sparkles">
+    Features built-in LAN discovery (mDNS) so you can start sharing with devices on your local network instantly.
+  </Card>
+  <Card title="Offline-First" icon="wifi-slash">
+    Search and discovery work even without an internet connection, as long as you have local peers.
+  </Card>
+</CardGroup>
+
+## Get Started
+
+Jump right in and start using SCP2P on your machine.
+
+<CardGroup cols={2}>
   <Card
-    title="API documentation"
+    title="CLI Quickstart"
     icon="terminal"
-    href="/api-reference/introduction"
+    href="/guides/quickstart"
   >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+    Build the CLI from source and publish your first Share.
   </Card>
   <Card
-    title="Code samples"
+    title="Desktop App"
+    icon="desktop"
+    href="/guides/desktop-app"
+  >
+    Run the Tauri graphical user interface.
+  </Card>
+</CardGroup>
+
+## Dive into the Protocol
+
+Explore how SCP2P works under the hood.
+
+<CardGroup cols={2}>
+  <Card
+    title="Architecture"
+    icon="sitemap"
+    href="/architecture"
+  >
+    Understand the high-level architecture and how nodes interact.
+  </Card>
+  <Card
+    title="Core Concepts"
+    icon="book"
+    href="/concepts/manifests"
+  >
+    Learn about Manifests, the DHT, Transports, and more.
+  </Card>
+</CardGroup>
+
+## Developer Resources
+
+Start building with SCP2P.
+
+<CardGroup cols={2}>
+  <Card
+    title="Core API"
     icon="code"
-    href="/essentials/code"
+    href="/reference/core-api"
   >
-    Add sample code to demonstrate how to use your product.
+    Explore the Rust core library API.
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="CLI Reference"
+    icon="terminal"
+    href="/reference/cli"
   >
-    Display images and other media.
+    Command-line interface documentation.
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>

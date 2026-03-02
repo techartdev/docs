@@ -1,0 +1,131 @@
+---
+title: "Quickstart"
+description: "Get started with SCP2P by running a local node and publishing your first Share"
+---
+
+This guide will walk you through compiling the SCP2P core reference CLI from source, starting a local node, and publishing your first Share.
+
+## Prerequisites
+
+Before you begin, ensure you have the Rust toolchain installed. SCP2P requires **Rust edition 2024**.
+
+<Steps>
+  <Step title="Install Rust">
+    If you don't have Rust installed, use `rustup`:
+    ```bash
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+    Verify your installation:
+    ```bash
+    cargo --version
+    ```
+  </Step>
+</Steps>
+
+## Building the CLI
+
+The reference CLI is located in the `crates/scp2p-cli` directory of the workspace.
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/scp2p/scp2p.git
+    cd scp2p
+    ```
+  </Step>
+  <Step title="Build the CLI">
+    Compile the CLI in release mode for optimal performance.
+    ```bash
+    cd crates/scp2p-cli
+    cargo build --release
+    ```
+  </Step>
+  <Step title="Locate the binary">
+    The compiled binary will be available at:
+    ```bash
+    ../target/release/scp2p-cli
+    ```
+    *Tip: You may want to add this binary to your system's `PATH`.*
+  </Step>
+</Steps>
+
+## Running Your First Node
+
+Now that you have the CLI built, let's start a node.
+
+<Steps>
+  <Step title="Start the daemon">
+    Open a terminal and start the node process. This process will handle DHT routing, networking, and maintaining your local database.
+    ```bash
+    scp2p-cli start --log-level info
+    ```
+    You should see output indicating the node has generated an Ed25519 identity, bound to a UDP/TCP port, and started the DHT.
+
+    Leave this terminal running.
+  </Step>
+</Steps>
+
+## Publishing a Share
+
+Let's create a directory with some files and publish it to the network.
+
+<Steps>
+  <Step title="Create sample data">
+    Open a *new* terminal window. Create a folder and some files to share.
+    ```bash
+    mkdir my-first-share
+    echo "Hello from SCP2P!" > my-first-share/hello.txt
+    echo "This is a decentralized catalog." > my-first-share/about.txt
+    ```
+  </Step>
+  <Step title="Publish the folder">
+    Use the CLI to publish the folder.
+    ```bash
+    scp2p-cli publish --name "My First Share" ./my-first-share
+    ```
+    The CLI will output a `ShareId` (a 32-byte hex string). **Copy this ID.**
+    
+    *Behind the scenes: The node hashes your files with BLAKE3, creates a Manifest, signs it, and announces the `ShareHead` to the DHT.*
+  </Step>
+</Steps>
+
+## Subscribing and Downloading
+
+To simulate another user, you can run a second node on a different port (or ask a friend on the same LAN to run one). For simplicity, we'll use the same node to subscribe to itself.
+
+<Steps>
+  <Step title="Subscribe to the Share">
+    Use the `ShareId` you copied in the previous step.
+    ```bash
+    scp2p-cli subscribe <PASTE_SHARE_ID_HERE>
+    ```
+    Your node will fetch the Manifest from the DHT/peers and index it locally.
+  </Step>
+  <Step title="Search your subscriptions">
+    Now you can search for the files you just published.
+    ```bash
+    scp2p-cli search "hello"
+    ```
+    The output will list matching items, including their `ContentId` (BLAKE3 hash). Copy the `ContentId`.
+  </Step>
+  <Step title="Download the file">
+    Download the file using its `ContentId`.
+    ```bash
+    scp2p-cli download <PASTE_CONTENT_ID_HERE> --out ./downloads
+    ```
+    Check the `./downloads` folder; you should see your `hello.txt` file!
+  </Step>
+</Steps>
+
+## Next Steps
+
+Now that you have a basic understanding of the publishing and downloading workflow, explore the following resources:
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="sitemap" href="/architecture">
+    Learn how SCP2P nodes discover each other and route data.
+  </Card>
+  <Card title="Desktop App" icon="desktop" href="/guides/desktop-app">
+    Try out the graphical Tauri application.
+  </Card>
+</CardGroup>

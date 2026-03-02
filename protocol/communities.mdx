@@ -1,0 +1,50 @@
+---
+title: "Communities & Visibility"
+description: "How SCP2P bounds discovery and creates trusted local networks"
+---
+
+A core design philosophy of SCP2P is the intentional absence of a "global search" or global autodiscovery model. Global models inevitably attract spam, SEO manipulation, and mass surveillance.
+
+Instead, SCP2P bounds wide-area discovery using **Communities** and explicit **Share Visibility**.
+
+## The Community Model
+
+A Community in SCP2P is essentially a specialized Share that acts as a decentralized directory. It provides a boundary for discovery.
+
+### Joining a Community
+- **Explicit Join:** Communities are not auto-discovered. To join a community, a user must obtain an Invite Link or manually input a valid `ShareId` and `share_pubkey` for that community.
+- **Cryptographic Binding:** The `share_pubkey` ensures that the community identity is cryptographically verified, preventing impersonation.
+- **Participant Probing:** Once a node joins a community, it can probe its reachable peers to discover other active participants who are also members of that specific community.
+
+### What Communities Provide
+When you are a member of a community, you gain two primary capabilities:
+1. **Participant Discovery:** You learn the `PeerAddr` (IP/Port/Relay) of other members, enriching your local PEX and routing tables.
+2. **Public Share Discovery:** You can browse Shares that other members have explicitly published *to that community*.
+
+## Share Visibility
+
+When a publisher creates a Share (a catalog of files), they must define its visibility in the Manifest. 
+
+There are two visibility modes:
+
+### 1. `private`
+- **Requires Exact ID:** A private Share cannot be discovered by browsing. Another user can only subscribe to it if they are given the exact `ShareId`.
+- **Use Case:** Personal backups, direct sharing with specific friends or collaborators, or highly sensitive internal distributions.
+
+### 2. `public`
+- **Community Browsable:** A public Share is announced to the communities the publisher is a part of.
+- **Direct Subscription:** Other members browsing the community can see the Share's metadata (Title, Description) and choose to subscribe to it directly with a single click.
+- **Use Case:** Open-source software distribution, public neighborhood bulletin boards, or general community file sharing.
+
+## Search is Always Local
+
+Regardless of whether a Share is `public` or `private`, **search remains strictly local**.
+
+When a user performs a search query (e.g., "vacation photos"), the node *only* queries the local SQLite database. The local database only indexes the Manifests of Shares the user has explicitly chosen to subscribe to.
+
+1. **You join a Community.** (You discover peers).
+2. **You browse the Community's public Shares.** (You see what is available).
+3. **You subscribe to Shares you care about.** (Their Manifests sync to your machine).
+4. **You search.** (Results only come from your curated subscriptions).
+
+This architecture ensures that discovery is bounded, search is instant and spam-free, and metadata never leaks to an untrusted central server.
