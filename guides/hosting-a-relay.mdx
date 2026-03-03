@@ -99,6 +99,47 @@ scp2p-relay \
 
 If you are hosting a relay on a server, you will want it to run continuously in the background and restart automatically on failure.
 
+### Recommended: use `--persist`
+
+`scp2p-relay` can install itself as a system service and start immediately.
+
+Run the same relay command you already tested, then append `--persist`.
+All flags you pass (for example `--bootstrap`, `--announce`, `--data-dir`) are saved into the installed service command.
+
+<Tabs>
+  <Tab title="Linux (systemd)">
+
+```bash
+sudo scp2p-relay --bootstrap seed1.example.com:7001 --persist
+```
+
+This writes `/etc/systemd/system/scp2p-relay.service`, runs `systemctl daemon-reload`, and runs `systemctl enable --now scp2p-relay`.
+
+  </Tab>
+  <Tab title="macOS (launchd)">
+
+```bash
+sudo scp2p-relay --bootstrap seed1.example.com:7001 --persist
+```
+
+This writes `/Library/LaunchDaemons/com.scp2p.relay.plist` and runs `launchctl bootstrap`.
+
+  </Tab>
+  <Tab title="Windows (SCM)">
+
+```powershell
+scp2p-relay --bootstrap seed1.example.com:7001 --persist
+```
+
+Run PowerShell as Administrator. This registers `scp2p-relay` in the Windows Service Manager (`sc.exe`) and starts it.
+
+  </Tab>
+</Tabs>
+
+### Manual service setup (advanced)
+
+If you need full manual control, you can still manage the service configuration yourself.
+
 ### Linux (systemd)
 
 Create a file at `/etc/systemd/system/scp2p-relay.service`:
@@ -161,9 +202,15 @@ nssm start scp2p-relay
 
 On its first start, `scp2p-relay` generates a stable Ed25519 cryptographic identity. 
 
-This identity is stored in a local state database (`relay.db`). It is very important to **keep this file safe and backed up**. 
+This identity is stored in a local state database (`relay.db`). It is very important to **keep this file safe and backed up**.
 
 If you lose this database, your relay will generate a new identity on the next startup. Any clients that have securely "pinned" your old relay public key will reject connections to the new one, breaking their routing until they update their configuration.
+
+If you install the relay with `--persist`, set `--data-dir` at install time if you want the service to use a non-default storage location:
+
+```bash
+sudo scp2p-relay --data-dir /var/lib/scp2p-relay --bootstrap seed1.example.com:7001 --persist
+```
 
 **Default Database Locations:**
 - **Linux:** `~/.local/share/scp2p-relay/`
