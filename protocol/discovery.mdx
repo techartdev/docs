@@ -38,6 +38,16 @@ To prevent abuse, the DHT strictly validates the keyspace of incoming `STORE` re
 - **Key:** `SHA-256("manifest:loc:" || ManifestId)`
 - **Value:** A list of `PeerAddr` holding the manifest.
 
+### `community:info:*`
+- **Purpose:** Community member discovery.
+- **Key:** `SHA-256("community:info:" || CommunityShareId)`
+- **Value:** A `CommunityMembers` structure containing peer addresses of active members.
+
+### Relay rendezvous keys
+- **Purpose:** Discover relay-capable nodes.
+- **Key:** Time-bucketed rendezvous keys derived from relay public key + bucket index.
+- **Value:** Signed `RelayAnnouncement` payloads.
+
 *Any `STORE` request attempting to write to an unknown prefix is immediately rejected, protecting the network from being used as a generic, unmetered data store.*
 
 ## 3. Community-Scoped Discovery
@@ -45,7 +55,7 @@ To prevent abuse, the DHT strictly validates the keyspace of incoming `STORE` re
 SCP2P purposefully avoids a "global search" or global autodiscovery model to prevent spam and preserve privacy. Instead, non-LAN discovery is bounded by **Communities**.
 
 - **Explicit Join:** To join a community, a user must have a valid `ShareId` and `share_pubkey`. It is not auto-discovered.
-- **Participant Probing:** Once joined, a node can discover other participants actively online within that specific community.
+- **DHT-backed Member Discovery:** Once joined, nodes discover participants through `community:info` DHT records (and can still validate status directly with peers).
 - **Public Share Browse:** Within a community, nodes can browse "public" shares explicitly published to that community, allowing localized discovery without exposing the shares to the entire internet.
 
 ## Reachability and Relays

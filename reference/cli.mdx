@@ -9,7 +9,7 @@ It does not use verb-style subcommands such as `start` or `publish`.
 ## Launch
 
 ```bash
-scp2p [--db PATH] [--port PORT] [--bootstrap IP:PORT[,IP:PORT...]] [--log-level LEVEL]
+scp2p [--db PATH] [--port PORT] [--quic-port PORT] [--bootstrap IP:PORT[,IP:PORT...]] [--log-level LEVEL]
 ```
 
 When it starts, it opens a menu-based shell and runs a local node.
@@ -24,6 +24,10 @@ When it starts, it opens a menu-based shell and runs a local node.
   TCP listen port for incoming peer connections. Default: `7001`.
 </ParamField>
 
+<ParamField query="--quic-port" type="number">
+  QUIC listen port. Default: `--port - 1`. Set `0` to disable QUIC.
+</ParamField>
+
 <ParamField query="--bootstrap" type="string">
   Bootstrap peers as `IP:PORT`. Repeat flag or use comma-separated values.
 </ParamField>
@@ -35,6 +39,7 @@ When it starts, it opens a menu-based shell and runs a local node.
 Environment variable equivalents:
 - `SCP2P_DB`
 - `SCP2P_PORT`
+- `SCP2P_QUIC_PORT`
 - `SCP2P_BOOTSTRAP`
 - `SCP2P_LOG`
 
@@ -47,6 +52,7 @@ Environment variable equivalents:
 - `Publish folder`
 - `Browse / inspect a share`
 - `Subscriptions` (list, subscribe, sync)
+- `Communities` (create, join, leave, browse)
 - `Search`
 - `Download by content ID`
 - `Download share` (multi-file)
@@ -57,7 +63,7 @@ Environment variable equivalents:
 
 1. Start shell:
    ```bash
-   scp2p --db scp2p.db --bootstrap 203.0.113.10:7001
+   scp2p --db scp2p.db --port 7001 --quic-port 7000 --bootstrap 203.0.113.10:7001
    ```
 2. Publish content from **Publish files** or **Publish folder**.
 3. Add subscriptions from **Subscriptions**.
@@ -69,4 +75,6 @@ Environment variable equivalents:
 - Press `Esc` in prompts to cancel and return.
 - If no peers are configured, sync/download prompts for extra peer addresses.
 - Use the same DB path between runs to keep identity, subscriptions, and cached manifests.
-- The shell starts a TLS DHT service bound to `0.0.0.0:<port>`.
+- The shell starts a TLS DHT service on `0.0.0.0:<port>`.
+- The shell starts a QUIC DHT service on `0.0.0.0:<quic-port>` unless `--quic-port 0`.
+- The shell starts background DHT republish/subscription-sync loops and attempts relay tunnel registration for firewalled reachability.

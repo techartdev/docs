@@ -3,175 +3,186 @@ title: "Core API"
 description: "Interacting with the SCP2P Rust Core Library"
 ---
 
-The core logic of SCP2P is encapsulated in the `crates/scp2p-core` library. It provides a high-level asynchronous API via the `NodeHandle` struct.
+The `crates/scp2p-core` crate exposes SCP2P runtime, protocol, and transport primitives.
+For application integration, you primarily use `Node` and `NodeHandle`.
 
-This allows developers to easily embed SCP2P functionality into desktop apps, mobile apps, or backend services.
+## Start a node
 
-## Initialization
-
-To participate in the network, you must start a `Node`.
+Start with `NodeConfig`, then call `Node::start` or `Node::start_with_store`.
 
 ```rust
-use scp2p_core::{Node, RuntimeConfig};
+use scp2p_core::{Node, NodeConfig};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = RuntimeConfig::default();
-    
-    // Starts the background networking tasks and returns a handle
-    let node_handle = Node::start(config).await?;
-    
+    let config = NodeConfig::default();
+    let node = Node::start(config).await?;
+    let _node_key = node.ensure_node_identity().await?;
     Ok(())
 }
 ```
 
-## NodeHandle API
+`NodeConfig` controls bind addresses, capabilities, bootstrap peers, subscription limits, publisher-key auto-protection, and community strict mode.
 
-The `NodeHandle` provides the thread-safe interface to interact with the running node.
+## Main exported types
 
-### Identity & Lifecycle
+- Runtime and lifecycle: `Node`, `NodeHandle`, `NodeConfig`
+- IDs and manifests: `NodeId`, `ShareId`, `ContentId`, `ManifestId`, `ManifestV1`, `ShareHead`, `ShareKeypair`, `ShareVisibility`
+- Peers and transport: `PeerAddr`, `TransportProtocol`, `Capabilities`, `FetchPolicy`, `RequestTransport`, `PeerConnector`
+- Search: `SearchQuery`, `SearchPageQuery`, `SearchPage`, `SearchResult`, `SearchTrustFilter`
+- Communities and policy: `CommunityMembershipToken`, `SubscriptionTrustLevel`, `BlocklistRules`
+- Relay: `RelayLimits`, `RelayAnnouncement`, `ActiveRelaySlot`, `AbuseLimits`
+- Persistence: `Store`, `MemoryStore`, `SqliteStore`, `PersistedState` and related persisted record types
 
-<ResponseField name="runtime_config" type="fn">
-  Returns the current configuration of the node.
-  ```rust
-  fn runtime_config(&self) -> RuntimeConfig
-  ```
-</ResponseField>
+## NodeHandle API surface
 
-### Peers
+### Runtime and identity
 
-<ResponseField name="connect" type="async fn">
-  Attempt to connect to a specific peer multiaddress.
-  ```rust
-  async fn connect(&self, peer_addr: PeerAddr) -> anyhow::Result<()>
-  ```
-</ResponseField>
+- `runtime_config()`
+- `configured_bootstrap_peers()`
+- `ensure_node_identity()`
+- `pin_bootstrap_key(peer_addr, expected_pubkey)`
+- `pinned_bootstrap_key(peer_addr_str)`
 
-<ResponseField name="peer_records" type="async fn">
-  Retrieve a list of known peers from the local database.
-  ```rust
-  async fn peer_records(&self) -> Vec<PeerRecord>
-  ```
-</ResponseField>
+### Peer management and PEX
 
-### Subscriptions
+- `connect(peer_addr)`
+- `record_peer_seen(peer_addr)`
+- `record_peer_seen_with_capabilities(peer_addr, capabilities)`
+- `peer_records()`
+- `note_peer_outcome(addr, success)`
+- `apply_pex_offer(offer)`
+- `build_pex_offer(req)`
 
-<ResponseField name="subscribe" type="async fn">
-  Subscribe to a specific Share by its ID.
-  ```rust
-  async fn subscribe(&self, share_id: ShareId) -> anyhow::Result<()>
-  ```
-</ResponseField>
+### Subscriptions, trust, and blocklists
 
-<ResponseField name="unsubscribe" type="async fn">
-  Unsubscribe from a Share.
-  ```rust
-  async fn unsubscribe(&self, share_id: ShareId) -> anyhow::Result<()>
-  ```
-</ResponseField>
+- `subscriptions()`
+- `subscribe(share_id)`
+- `subscribe_with_pubkey(share_id, share_pubkey)`
+- `subscribe_with_trust(share_id, share_pubkey, trust_level)`
+- `set_subscription_trust_level(share_id, trust_level)`
+- `unsubscribe(share_id)`
+- `set_blocklist_rules(blocklist_share_id, rules)`
+- `clear_blocklist_rules(blocklist_share_id)`
+- `enable_blocklist_share(blocklist_share_id)`
+- `disable_blocklist_share(blocklist_share_id)`
+- `sync_subscriptions()`
+- `sync_subscriptions_over_dht(transport, peers)`
+- `apply_blocklist_updates_from_subscriptions(transport, peers)`
+- `start_blocklist_auto_sync_loop(transport, peers, interval)`
 
-<ResponseField name="sync_subscriptions" type="async fn">
-  Force a manual sync of all subscribed shares from the DHT.
-  ```rust
-  async fn sync_subscriptions(&self) -> anyhow::Result<()>
-  ```
-</ResponseField>
+### Publishing and local share management
 
-<ResponseField name="list_subscriptions" type="async fn">
-  List all current subscriptions.
-  ```rust
-  async fn list_subscriptions(&self) -> Vec<SubscriptionView>
-  ```
-</ResponseField>
+- `ensure_publisher_identity(label)`
+- `auto_protect_publisher_identities()`
+- `publish_share(manifest, publisher)`
+- `publish_files(files, base_dir, title, description, visibility, communities, provider, publisher)`
+- `publish_folder(root_dir, title, description, visibility, communities, provider, publisher)`
+- `register_content_by_path(peer, content_bytes, path)`
+- `register_content_precomputed(peer, desc, path)`
+- `register_content_from_bytes(peer, content_bytes, data_dir)`
+- `list_owned_shares()`
+- `delete_published_share(share_id)`
+- `update_share_visibility(share_id, new_visibility)`
+- `published_share_head(share_id)`
+- `list_local_public_shares(max_entries)`
+- `fetch_public_shares_from_peer(transport, peer, max_entries)`
+- `list_share_items(share_id)`
+- `cached_manifest_meta(manifest_id)`
 
-### Publishing
+### Community membership and community browse
 
-<ResponseField name="publish_text" type="async fn">
-  Publish a simple text payload as a new Share.
-  ```rust
-  async fn publish_text(&self, text: String, opts: PublishOpts) -> anyhow::Result<ShareId>
-  ```
-</ResponseField>
-
-<ResponseField name="publish_files" type="async fn">
-  Publish a specific list of files.
-  ```rust
-  async fn publish_files(&self, paths: Vec<PathBuf>, opts: PublishOpts) -> anyhow::Result<ShareId>
-  ```
-</ResponseField>
-
-<ResponseField name="publish_folder" type="async fn">
-  Hash a local directory, create a new Manifest, and announce it.
-  ```rust
-  async fn publish_folder(&self, dir_path: PathBuf, opts: PublishOpts) -> anyhow::Result<ShareId>
-  ```
-</ResponseField>
-
-<ResponseField name="list_own_shares" type="async fn">
-  List Shares published by this node.
-  ```rust
-  async fn list_own_shares(&self) -> Vec<PublicShareView>
-  ```
-</ResponseField>
-
-### Browse
-
-<ResponseField name="list_public_shares_from_peers" type="async fn">
-  Discover public shares announced by connected peers.
-  ```rust
-  async fn list_public_shares_from_peers(&self) -> Vec<PublicShareView>
-  ```
-</ResponseField>
-
-<ResponseField name="list_share_items" type="async fn">
-  List the items available in a specific known Share.
-  ```rust
-  async fn list_share_items(&self, share_id: ShareId) -> Vec<ShareItemView>
-  ```
-</ResponseField>
+- `communities()`
+- `join_community(share_id, share_pubkey)`
+- `join_community_named(share_id, share_pubkey, name)`
+- `join_community_with_token(share_id, share_pubkey, token)`
+- `join_community_with_options(share_id, share_pubkey, token, name)`
+- `leave_community(share_id)`
+- `update_community_name(share_id, name)`
+- `list_local_community_public_shares(community_share_id, community_share_pubkey, max_entries, requester_node_pubkey, requester_membership_proof)`
+- `fetch_community_status_from_peer(transport, peer, share_id, share_pubkey)`
+- `fetch_community_public_shares_from_peer(transport, peer, community_share_id, community_share_pubkey, max_entries)`
+- `upsert_community_member(community_share_id, member_addr)`
+- `reannounce_community_memberships(self_addr)`
 
 ### Search
 
-<ResponseField name="search" type="async fn">
-  Search locally across all subscribed Manifests.
-  ```rust
-  async fn search(&self, query: &str, filters: SearchFilters) -> anyhow::Result<Vec<SearchResult>>
-  ```
-</ResponseField>
+- `set_share_weight(share_id, weight)`
+- `search(query)`
+- `search_with_trust_filter(query, trust_filter)`
+- `search_page(query)`
+- `search_page_with_trust_filter(query, trust_filter)`
 
-### Downloading & Seeding
+### Fetch, download, and transfer persistence
 
-<ResponseField name="download_items" type="async fn">
-  Initiate a swarmed download for specific items from a Share to a target directory.
-  ```rust
-  async fn download_items(
-      &self, 
-      share_id: ShareId, 
-      content_ids: Vec<ContentId>, 
-      target_dir: PathBuf
-  ) -> anyhow::Result<()>
-  ```
-</ResponseField>
+- `fetch_manifest_from_peers(connector, peers, manifest_id, policy)`
+- `download_from_peers(connector, peers, content_id, target_path, policy, self_addr, on_progress)`
+- `begin_partial_download(content_id, target_path, total_chunks)`
+- `mark_partial_chunk_complete(content_id, chunk_index)`
+- `clear_partial_download(content_id)`
+- `reannounce_content_providers(self_addr)`
+- `reannounce_seeded_content(self_addr)`
+- `reannounce_subscribed_share_heads()`
+- `reannounce_published_share_data()`
 
-<ResponseField name="reannounce_seeded_content" type="async fn">
-  Refresh DHT `Providers` entries for all locally held blobs. Should be called periodically.
-  ```rust
-  async fn reannounce_seeded_content(&self, self_addr: PeerAddr) -> anyhow::Result<usize>
-  ```
-</ResponseField>
+### DHT and background services
 
-### Communities
+- `dht_upsert_peer(peer_addr, capabilities, observed_at_unix)`
+- `dht_find_node(req)`
+- `dht_store(req)`
+- `dht_find_value(key)`
+- `dht_store_replicated(transport, seed_peers, req)`
+- `dht_find_node_iterative(transport, target_node_id, seed_peers)`
+- `dht_find_value_iterative(transport, key, seed_peers)`
+- `dht_find_share_head_iterative(transport, share_id, seed_peers, expected_share_pubkey)`
+- `dht_republish_once(transport, seed_peers)`
+- `start_dht_republish_loop(transport, seed_peers, interval)`
+- `start_subscription_sync_loop(transport, seed_peers, interval)`
+- `start_tls_dht_service(bind_addr, signing_key, capabilities, tls_handle)`
+- `start_quic_dht_service(quic_server, signing_key, capabilities)`
 
-<ResponseField name="join_community" type="async fn">
-  Join a specific community share.
-  ```rust
-  async fn join_community(&self, share_id: ShareId, share_pubkey: PubKey) -> anyhow::Result<()>
-  ```
-</ResponseField>
+### Relay APIs
 
-<ResponseField name="list_communities" type="async fn">
-  List communities this node is a part of.
-  ```rust
-  async fn list_communities(&self) -> Vec<CommunityView>
-  ```
-</ResponseField>
+- Session and stream primitives:
+- `relay_register(peer_addr)`
+- `relay_register_with_slot(peer_addr, slot_hint)`
+- `relay_connect(peer_addr, req)`
+- `relay_stream(peer_addr, frame)`
+- Policy and scoring:
+- `set_relay_limits(limits)`
+- `set_abuse_limits(limits)`
+- `note_relay_result(peer, success)`
+- `select_relay_peer()`
+- `select_relay_peers(max_peers)`
+- Discovery and announcements:
+- `fetch_relay_list_from_peer(transport, peer, max_entries)`
+- `ingest_relay_announcements(announcements)`
+- `discover_relays_via_peers(transport, peers, per_peer_limit)`
+- `publish_relay_announcement(signing_key, addrs, capacity, bandwidth_class, issued_at, ttl_secs)`
+- `publish_relay_announcement_to_dht(transport, seed_peers, signing_key, addrs, capacity, bandwidth_class, ttl_secs)`
+- `discover_relays_from_dht(transport, seed_peers, now_unix, per_key_limit)`
+- Firewalled reachability:
+- `register_relay_tunnel(connector, relay_peer)`
+- `active_relay_slot()`
+- `active_relay_slots()`
+- `relayed_self_addr(self_addr)`
+- `all_relayed_self_addrs(self_addr)`
+
+### Encryption helpers
+
+- `set_encrypted_node_key(secret)`
+- `decrypt_node_key(passphrase)`
+- `encrypt_publisher_identities(passphrase)`
+- `unlock_publisher_identities(passphrase)`
+
+## Membership tokens
+
+`CommunityMembershipToken` provides:
+- `CommunityMembershipToken::issue(...)`
+- `CommunityMembershipToken::verify(...)`
+
+Use this when you want cryptographically provable community membership between nodes.
+
+## Note on signatures
+
+Some APIs are generic over `RequestTransport` or `PeerConnector`, and some functions have many arguments for explicit protocol control. For exact signatures, use the source in `crates/scp2p-core/src/api/*.rs`.

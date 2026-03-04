@@ -14,11 +14,12 @@ A Community in SCP2P is essentially a specialized Share that acts as a decentral
 ### Joining a Community
 - **Explicit Join:** Communities are not auto-discovered. To join a community, a user must obtain an Invite Link or manually input a valid `ShareId` and `share_pubkey` for that community.
 - **Cryptographic Binding:** The `share_pubkey` ensures that the community identity is cryptographically verified, preventing impersonation.
-- **Participant Probing:** Once a node joins a community, it can probe its reachable peers to discover other active participants who are also members of that specific community.
+- **Membership Proofs (Optional in v0.1):** Membership tokens can be attached and verified, but today membership without a token is still allowed by default.
+- **DHT Member Discovery:** Joined nodes publish and discover community members via `community:info` DHT records, then query discovered members for community status and public-share listings.
 
 ### What Communities Provide
 When you are a member of a community, you gain two primary capabilities:
-1. **Participant Discovery:** You learn the `PeerAddr` (IP/Port/Relay) of other members, enriching your local PEX and routing tables.
+1. **Participant Discovery:** You learn the `PeerAddr` (IP/Port/Relay) of other members through community DHT records and peer status checks, enriching local PEX and routing tables.
 2. **Public Share Discovery:** You can browse Shares that other members have explicitly published *to that community*.
 
 ## Share Visibility
@@ -42,7 +43,7 @@ Regardless of whether a Share is `public` or `private`, **search remains strictl
 
 When a user performs a search query (e.g., "vacation photos"), the node *only* queries the local SQLite database. The local database only indexes the Manifests of Shares the user has explicitly chosen to subscribe to.
 
-1. **You join a Community.** (You discover peers).
+1. **You join a Community.** (You publish/consume community membership metadata).
 2. **You browse the Community's public Shares.** (You see what is available).
 3. **You subscribe to Shares you care about.** (Their Manifests sync to your machine).
 4. **You search.** (Results only come from your curated subscriptions).
